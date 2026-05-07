@@ -19,6 +19,236 @@
     </table>
 </section>
 
+{% if session.get('is_admin') %}
+<section>
+    <h2>Admin Analytics</h2>
+    <div class="metric-grid">
+        <div class="metric-card">
+            <h3>Most Frequent Customer</h3>
+            {% if admin_frequent_customer %}
+            <p>{{ admin_frequent_customer.customer_email }}</p>
+            <p>{{ admin_frequent_customer.tickets_sold }} tickets</p>
+            {% else %}
+            <p>No customer activity in the last year.</p>
+            {% endif %}
+        </div>
+        <div class="metric-card">
+            <h3>Delay vs On-Time (Last Year)</h3>
+            <p>On-time: {{ admin_delay_stats.on_time_flights or 0 }}</p>
+            <p>Delayed: {{ admin_delay_stats.delayed_flights or 0 }}</p>
+            <p>Cancelled: {{ admin_delay_stats.cancelled_flights or 0 }}</p>
+            <p>Delay rate: {{ "%.2f"|format(admin_delay_stats.delayed_rate or 0) }}%</p>
+        </div>
+    </div>
+
+    <form method="get">
+        <input type="hidden" name="tickets_start_date" value="{{ tickets_chart_start_date }}">
+        <input type="hidden" name="tickets_end_date" value="{{ tickets_chart_end_date }}">
+        <label>Month
+            <select name="analytics_month">
+                {% for month in range(1, 13) %}
+                <option value="{{ month }}" {% if analytics_month == month %}selected{% endif %}>{{ month }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Year
+            <select name="analytics_year">
+                {% for year in analytics_year_options %}
+                <option value="{{ year }}" {% if analytics_year == year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Refresh Agent Rankings</button>
+    </form>
+
+    <h3>Top Booking Agents by Tickets: Month ({{ analytics_month }}/{{ analytics_year }})</h3>
+    {% if admin_top_agents_by_tickets_month %}
+    <table>
+        <thead>
+            <tr><th>Agent</th><th>Tickets Sold</th></tr>
+        </thead>
+        <tbody>
+            {% for row in admin_top_agents_by_tickets_month %}
+            <tr>
+                <td>{{ row.agent_email }}</td>
+                <td>{{ row.tickets_sold }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No booking-agent ticket sales for that month.</p>
+    {% endif %}
+
+    <h3>Top Booking Agents by Commission: Month ({{ analytics_month }}/{{ analytics_year }})</h3>
+    {% if admin_top_agents_by_commission_month %}
+    <table>
+        <thead>
+            <tr><th>Agent</th><th>Total Commission</th></tr>
+        </thead>
+        <tbody>
+            {% for row in admin_top_agents_by_commission_month %}
+            <tr>
+                <td>{{ row.agent_email }}</td>
+                <td>${{ "%.2f"|format(row.total_commission) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No booking-agent commission data for that month.</p>
+    {% endif %}
+
+    <h3>Top Booking Agents by Tickets: Year ({{ analytics_year }})</h3>
+    {% if admin_top_agents_by_tickets_year %}
+    <table>
+        <thead>
+            <tr><th>Agent</th><th>Tickets Sold</th></tr>
+        </thead>
+        <tbody>
+            {% for row in admin_top_agents_by_tickets_year %}
+            <tr>
+                <td>{{ row.agent_email }}</td>
+                <td>{{ row.tickets_sold }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No booking-agent ticket sales for that year.</p>
+    {% endif %}
+
+    <h3>Top Booking Agents by Commission: Year ({{ analytics_year }})</h3>
+    {% if admin_top_agents_by_commission_year %}
+    <table>
+        <thead>
+            <tr><th>Agent</th><th>Total Commission</th></tr>
+        </thead>
+        <tbody>
+            {% for row in admin_top_agents_by_commission_year %}
+            <tr>
+                <td>{{ row.agent_email }}</td>
+                <td>${{ "%.2f"|format(row.total_commission) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No booking-agent commission data for that year.</p>
+    {% endif %}
+
+    <form method="get">
+        <input type="hidden" name="analytics_month" value="{{ analytics_month }}">
+        <input type="hidden" name="analytics_year" value="{{ analytics_year }}">
+        <label>Tickets chart start date
+            <input type="date" name="tickets_start_date" value="{{ tickets_chart_start_date }}">
+        </label>
+        <label>Tickets chart end date
+            <input type="date" name="tickets_end_date" value="{{ tickets_chart_end_date }}">
+        </label>
+        <button type="submit">Refresh Tickets Chart</button>
+    </form>
+
+    <h3>Tickets Sold Per Month</h3>
+    <p>{{ admin_tickets_sold_per_month.start_date }} to {{ admin_tickets_sold_per_month.end_date }}</p>
+    {% if admin_tickets_sold_per_month.chart_rows %}
+    <div class="bar-chart">
+        {% for row in admin_tickets_sold_per_month.chart_rows %}
+        <div class="bar-row">
+            <span class="bar-label">{{ row.month_label }}</span>
+            <div class="bar-track">
+                <div class="bar-fill" style="width: {{ row.bar_percent }}%"></div>
+            </div>
+            <span class="bar-value">{{ row.value|int }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No ticket sales data for that range.</p>
+    {% endif %}
+
+    <h3>Top Destinations by Airport: Last 3 Months</h3>
+    {% if admin_top_destinations_3m_airport %}
+    <table>
+        <thead>
+            <tr><th>Destination</th><th>Tickets Sold</th><th>Revenue</th></tr>
+        </thead>
+        <tbody>
+            {% for row in admin_top_destinations_3m_airport %}
+            <tr>
+                <td>{{ row.destination_name }}</td>
+                <td>{{ row.tickets_sold }}</td>
+                <td>${{ "%.2f"|format(row.revenue) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No airport destination data for the last 3 months.</p>
+    {% endif %}
+
+    <h3>Top Destinations by City: Last 3 Months</h3>
+    {% if admin_top_destinations_3m_city %}
+    <table>
+        <thead>
+            <tr><th>Destination</th><th>Tickets Sold</th><th>Revenue</th></tr>
+        </thead>
+        <tbody>
+            {% for row in admin_top_destinations_3m_city %}
+            <tr>
+                <td>{{ row.destination_name }}</td>
+                <td>{{ row.tickets_sold }}</td>
+                <td>${{ "%.2f"|format(row.revenue) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No city destination data for the last 3 months.</p>
+    {% endif %}
+
+    <h3>Top Destinations by Airport: Last Year</h3>
+    {% if admin_top_destinations_1y_airport %}
+    <table>
+        <thead>
+            <tr><th>Destination</th><th>Tickets Sold</th><th>Revenue</th></tr>
+        </thead>
+        <tbody>
+            {% for row in admin_top_destinations_1y_airport %}
+            <tr>
+                <td>{{ row.destination_name }}</td>
+                <td>{{ row.tickets_sold }}</td>
+                <td>${{ "%.2f"|format(row.revenue) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No airport destination data for the last year.</p>
+    {% endif %}
+
+    <h3>Top Destinations by City: Last Year</h3>
+    {% if admin_top_destinations_1y_city %}
+    <table>
+        <thead>
+            <tr><th>Destination</th><th>Tickets Sold</th><th>Revenue</th></tr>
+        </thead>
+        <tbody>
+            {% for row in admin_top_destinations_1y_city %}
+            <tr>
+                <td>{{ row.destination_name }}</td>
+                <td>{{ row.tickets_sold }}</td>
+                <td>${{ "%.2f"|format(row.revenue) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No city destination data for the last year.</p>
+    {% endif %}
+</section>
+{% endif %}
+
 <section>
     <h2>Airline Flights</h2>
     <table>

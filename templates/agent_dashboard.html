@@ -5,9 +5,47 @@
     <h2>Agent Dashboard</h2>
     <table>
         <tr><th>Tickets sold in last 30 days</th><td>{{ summary.tickets_sold }}</td></tr>
-        <tr><th>Total commission</th><td>${{ "%.2f"|format(summary.total_commission) }}</td></tr>
-        <tr><th>Average commission</th><td>${{ "%.2f"|format(summary.average_commission) }}</td></tr>
+        <tr><th>Total commission in last 30 days</th><td>${{ "%.2f"|format(summary.total_commission) }}</td></tr>
+        <tr><th>Average commission per ticket</th><td>${{ "%.2f"|format(summary.average_commission) }}</td></tr>
     </table>
+</section>
+
+<section>
+    <h2>Top 5 Customers by Tickets (Last 6 Months)</h2>
+    {% if top_customers_by_tickets %}
+    <div class="bar-chart">
+        {% for row in top_customers_by_tickets %}
+        <div class="bar-row">
+            <span class="bar-label">{{ row.customer_email }}</span>
+            <div class="bar-track">
+                <div class="bar-fill" style="width: {{ row.bar_percent }}%"></div>
+            </div>
+            <span class="bar-value">{{ row.tickets_sold }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No ticket history in the last 6 months.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>Top 5 Customers by Commission (Last Year)</h2>
+    {% if top_customers_by_commission %}
+    <div class="bar-chart">
+        {% for row in top_customers_by_commission %}
+        <div class="bar-row">
+            <span class="bar-label">{{ row.customer_email }}</span>
+            <div class="bar-track">
+                <div class="bar-fill" style="width: {{ row.bar_percent }}%"></div>
+            </div>
+            <span class="bar-value">${{ "%.2f"|format(row.total_commission) }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No commission history in the last year.</p>
+    {% endif %}
 </section>
 
 <section>

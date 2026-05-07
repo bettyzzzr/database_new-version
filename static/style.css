@@ -116,3 +116,61 @@ th {
     background: #fde8e8;
     color: #9b1c1c;
 }
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.metric-card {
+    background: white;
+    border: 1px solid #d9dde4;
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.metric-card h3 {
+    margin-top: 0;
+}
+
+.metric-value {
+    font-size: 1.7rem;
+    font-weight: bold;
+    margin: 0.5rem 0 0;
+}
+
+.bar-chart {
+    display: grid;
+    gap: 0.65rem;
+    background: white;
+    border: 1px solid #d9dde4;
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.bar-row {
+    display: grid;
+    grid-template-columns: minmax(110px, 240px) 1fr minmax(70px, 120px);
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.bar-label,
+.bar-value {
+    font-size: 0.95rem;
+}
+
+.bar-track {
+    background: #edf1f7;
+    border-radius: 999px;
+    height: 0.9rem;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: #2f6fed;
+    border-radius: 999px;
+}

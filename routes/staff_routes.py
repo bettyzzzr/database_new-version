@@ -1,8 +1,16 @@
+from datetime import datetime
+
 from functools import wraps
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 
 from services.analytics_service import (
+    get_admin_delay_vs_on_time_stats,
+    get_admin_most_frequent_customer,
+    get_admin_tickets_sold_per_month,
+    get_admin_top_agents_by_commission,
+    get_admin_top_agents_by_tickets,
+    get_admin_top_destinations,
     get_agent_performance_summary,
     get_city_market_analysis,
     get_city_pair_market_analysis,
@@ -64,6 +72,19 @@ def _staff_context():
 def dashboard():
     passengers = []
     passenger_flight_num = ""
+    today = datetime.utcnow()
+    tickets_chart_start_date = request.args.get("tickets_start_date", "")
+    tickets_chart_end_date = request.args.get("tickets_end_date", "")
+    try:
+        selected_month = int(request.args.get("analytics_month", today.month))
+    except ValueError:
+        selected_month = today.month
+    try:
+        selected_year = int(request.args.get("analytics_year", today.year))
+    except ValueError:
+        selected_year = today.year
+    if selected_month < 1 or selected_month > 12:
+        selected_month = today.month
     if request.method == "POST" and request.form.get("action") == "passengers":
         passenger_flight_num = request.form.get("flight_num", "")
         passengers = get_passenger_list(_staff_context(), passenger_flight_num)
@@ -73,6 +94,42 @@ def dashboard():
     load_dashboard = get_flight_revenue_dashboard(session["airline_name"])
     agent_summary = get_agent_performance_summary(session["airline_name"])
     alerts = get_route_opportunity_alerts(session["airline_name"])
+    admin_top_agents_by_tickets_month = []
+    admin_top_agents_by_commission_month = []
+    admin_top_agents_by_tickets_year = []
+    admin_top_agents_by_commission_year = []
+    admin_frequent_customer = None
+    admin_tickets_sold_per_month = []
+    admin_delay_stats = None
+    admin_top_destinations_3m_airport = []
+    admin_top_destinations_3m_city = []
+    admin_top_destinations_1y_airport = []
+    admin_top_destinations_1y_city = []
+    if session.get("is_admin"):
+        admin_top_agents_by_tickets_month = get_admin_top_agents_by_tickets(session["airline_name"], selected_year, selected_month)
+        admin_top_agents_by_commission_month = get_admin_top_agents_by_commission(session["airline_name"], selected_year, selected_month)
+        admin_top_agents_by_tickets_year = get_admin_top_agents_by_tickets(session["airline_name"], selected_year)
+        admin_top_agents_by_commission_year = get_admin_top_agents_by_commission(session["airline_name"], selected_year)
+        admin_frequent_customer = get_admin_most_frequent_customer(session["airline_name"])
+        try:
+            if tickets_chart_start_date or tickets_chart_end_date:
+                if not tickets_chart_start_date or not tickets_chart_end_date:
+                    raise ValueError("Choose both a start date and end date for the tickets-sold chart.")
+                admin_tickets_sold_per_month = get_admin_tickets_sold_per_month(
+                    session["airline_name"],
+                    tickets_chart_start_date,
+                    tickets_chart_end_date,
+                )
+            else:
+                admin_tickets_sold_per_month = get_admin_tickets_sold_per_month(session["airline_name"])
+        except ValueError as exc:
+            admin_tickets_sold_per_month = get_admin_tickets_sold_per_month(session["airline_name"])
+            flash(str(exc), "error")
+        admin_delay_stats = get_admin_delay_vs_on_time_stats(session["airline_name"])
+        admin_top_destinations_3m_airport = get_admin_top_destinations(session["airline_name"], 3, "airport")
+        admin_top_destinations_3m_city = get_admin_top_destinations(session["airline_name"], 3, "city")
+        admin_top_destinations_1y_airport = get_admin_top_destinations(session["airline_name"], 12, "airport")
+        admin_top_destinations_1y_city = get_admin_top_destinations(session["airline_name"], 12, "city")
     return render_template(
         "staff_dashboard.html",
         flights=flights,
@@ -82,6 +139,22 @@ def dashboard():
         alerts=alerts,
         passengers=passengers,
         passenger_flight_num=passenger_flight_num,
+        analytics_month=selected_month,
+        analytics_year=selected_year,
+        analytics_year_options=list(range(today.year - 4, today.year + 1)),
+        tickets_chart_start_date=tickets_chart_start_date,
+        tickets_chart_end_date=tickets_chart_end_date,
+        admin_top_agents_by_tickets_month=admin_top_agents_by_tickets_month,
+        admin_top_agents_by_commission_month=admin_top_agents_by_commission_month,
+        admin_top_agents_by_tickets_year=admin_top_agents_by_tickets_year,
+        admin_top_agents_by_commission_year=admin_top_agents_by_commission_year,
+        admin_frequent_customer=admin_frequent_customer,
+        admin_tickets_sold_per_month=admin_tickets_sold_per_month,
+        admin_delay_stats=admin_delay_stats,
+        admin_top_destinations_3m_airport=admin_top_destinations_3m_airport,
+        admin_top_destinations_3m_city=admin_top_destinations_3m_city,
+        admin_top_destinations_1y_airport=admin_top_destinations_1y_airport,
+        admin_top_destinations_1y_city=admin_top_destinations_1y_city,
     )
 
 

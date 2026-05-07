@@ -8,6 +8,7 @@ from services.cart_service import (
     get_cart_flights,
     remove_from_cart,
 )
+from services.analytics_service import get_customer_custom_spending, get_customer_default_spending
 from services.customer_schema_service import ensure_customer_feature_schema
 from services.flight_service import search_upcoming_flights
 from services.frequent_search_service import get_recent_searches, record_search
@@ -64,6 +65,10 @@ def _raw_itinerary_legs(total_legs):
 @customer_required
 def dashboard():
     flights = []
+    spending_default = get_customer_default_spending(session["user_id"])
+    spending_custom = None
+    custom_start_date = request.args.get("spending_start_date", "")
+    custom_end_date = request.args.get("spending_end_date", "")
     if request.method == "POST":
         search = _flight_search_form()
         try:
@@ -78,6 +83,13 @@ def dashboard():
                 flash("No upcoming flights matched that search.", "error")
         except ValueError as exc:
             flash(str(exc), "error")
+    if custom_start_date or custom_end_date:
+        try:
+            if not custom_start_date or not custom_end_date:
+                raise ValueError("Choose both a start date and end date for custom spending analytics.")
+            spending_custom = get_customer_custom_spending(session["user_id"], custom_start_date, custom_end_date)
+        except ValueError as exc:
+            flash(str(exc), "error")
 
     tickets = get_customer_tickets(session["user_id"])
     wishlist = get_wishlist_items(session["user_id"])
@@ -90,6 +102,10 @@ def dashboard():
         wishlist=wishlist,
         waitlist=waitlist,
         recent_searches=recent_searches,
+        spending_default=spending_default,
+        spending_custom=spending_custom,
+        custom_start_date=custom_start_date,
+        custom_end_date=custom_end_date,
     )
 
 

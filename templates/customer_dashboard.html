@@ -37,6 +37,62 @@
     </form>
 </section>
 
+<section>
+    <h2>Review Spending</h2>
+    <div class="metric-grid">
+        <div class="metric-card">
+            <h3>Last 12 Months</h3>
+            <p class="metric-value">${{ "%.2f"|format(spending_default.total_spending) }}</p>
+        </div>
+    </div>
+    <h3>Last 6 Months</h3>
+    {% if spending_default.chart_rows %}
+    <div class="bar-chart">
+        {% for row in spending_default.chart_rows %}
+        <div class="bar-row">
+            <span class="bar-label">{{ row.month_label }}</span>
+            <div class="bar-track">
+                <div class="bar-fill" style="width: {{ row.bar_percent }}%"></div>
+            </div>
+            <span class="bar-value">${{ "%.2f"|format(row.value) }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No spending data yet.</p>
+    {% endif %}
+
+    <h3>Custom Range</h3>
+    <form method="get">
+        <label>Start date
+            <input type="date" name="spending_start_date" value="{{ custom_start_date }}">
+        </label>
+        <label>End date
+            <input type="date" name="spending_end_date" value="{{ custom_end_date }}">
+        </label>
+        <button type="submit">Review Spending</button>
+    </form>
+    {% if spending_custom %}
+    <div class="metric-grid">
+        <div class="metric-card">
+            <h3>{{ spending_custom.start_date }} to {{ spending_custom.end_date }}</h3>
+            <p class="metric-value">${{ "%.2f"|format(spending_custom.total_spending) }}</p>
+        </div>
+    </div>
+    <div class="bar-chart">
+        {% for row in spending_custom.chart_rows %}
+        <div class="bar-row">
+            <span class="bar-label">{{ row.month_label }}</span>
+            <div class="bar-track">
+                <div class="bar-fill" style="width: {{ row.bar_percent }}%"></div>
+            </div>
+            <span class="bar-value">${{ "%.2f"|format(row.value) }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+
 {% if flights %}
 <section>
     <h2>Available Flights</h2>
