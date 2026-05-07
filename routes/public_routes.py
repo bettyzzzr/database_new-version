@@ -1,6 +1,7 @@
-from flask import Blueprint, flash, render_template, request
+from flask import Blueprint, flash, render_template, request, session
 
 from services.flight_service import get_flight_status, search_upcoming_flights
+from services.frequent_search_service import record_search
 
 public_bp = Blueprint("public", __name__)
 
@@ -19,9 +20,22 @@ def flight_search():
         origin = request.form.get("origin", "")
         destination = request.form.get("destination", "")
         departure_date = request.form.get("departure_date") or None
-        flights = search_upcoming_flights(origin, destination, departure_date)
-        if not flights:
-            flash("No upcoming flights matched that search.", "error")
+        try:
+            flights = search_upcoming_flights(
+                origin,
+                destination,
+                departure_date,
+                request.form.get("airline", ""),
+                request.form.get("max_price", ""),
+                bool(request.form.get("available_only")),
+                request.form.get("sort_by", "departure_early"),
+            )
+            if session.get("role") == "customer":
+                record_search(session["user_id"], origin, destination, departure_date)
+            if not flights:
+                flash("No upcoming flights matched that search.", "error")
+        except ValueError as exc:
+            flash(str(exc), "error")
     return render_template("flight_search.html", flights=flights, searched=searched)
 
 

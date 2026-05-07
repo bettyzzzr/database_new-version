@@ -11,7 +11,9 @@ def _flight_capacity(airline_name, flight_num):
         FROM flight f
         JOIN airplane a ON f.airplane_id = a.airplane_id
         LEFT JOIN ticket t
-          ON f.airline_name = t.airline_name AND f.flight_num = t.flight_num
+          ON f.airline_name = t.airline_name
+         AND f.flight_num = t.flight_num
+         AND t.ticket_status = 'active'
         WHERE f.airline_name = %s AND f.flight_num = %s
         GROUP BY a.seats
         """,
@@ -33,13 +35,38 @@ def _ensure_can_purchase(airline_name, flight_num):
     return flight
 
 
-def purchase_ticket(customer_email, airline_name, flight_num):
-    """Purchase one direct customer ticket after server-side checks."""
+def get_seats_left(airline_name, flight_num):
+    """Return available seats for a flight."""
+    capacity = _flight_capacity(airline_name, flight_num)
+    if not capacity:
+        return 0
+    return max(capacity["seats"] - capacity["sold"], 0)
+
+
+def validate_customer_purchase(customer_email, airline_name, flight_num):
+    """Validate a customer and return the purchasable flight."""
     customer = fetch_one("SELECT email FROM customer WHERE email = %s", (customer_email,))
     if not customer:
         raise ValueError("Customer account was not found.")
+    return _ensure_can_purchase(airline_name, flight_num)
 
-    flight = _ensure_can_purchase(airline_name, flight_num)
+
+def insert_direct_ticket(cursor, customer_email, flight):
+    """Insert a direct customer ticket with an existing transaction cursor."""
+    cursor.execute(
+        """
+        INSERT INTO ticket
+            (airline_name, flight_num, customer_email, booking_agent_email, sold_price)
+        VALUES (%s, %s, %s, NULL, %s)
+        """,
+        (flight["airline_name"], flight["flight_num"], customer_email, flight["price"]),
+    )
+    return cursor.lastrowid
+
+
+def purchase_ticket(customer_email, airline_name, flight_num):
+    """Purchase one direct customer ticket after server-side checks."""
+    flight = validate_customer_purchase(customer_email, airline_name, flight_num)
     ticket_id = execute(
         """
         INSERT INTO ticket
@@ -87,7 +114,7 @@ def get_customer_tickets(customer_email):
     return fetch_all(
         """
         SELECT t.*, f.departure_airport, f.departure_time, f.arrival_airport,
-               f.arrival_time, f.status, f.current_status
+               f.arrival_time, f.departure_time_utc, f.status, f.current_status
         FROM ticket t
         JOIN flight_status_view f
           ON t.airline_name = f.airline_name AND t.flight_num = f.flight_num
@@ -103,7 +130,7 @@ def get_agent_tickets(agent_email):
     return fetch_all(
         """
         SELECT t.*, f.departure_airport, f.departure_time, f.arrival_airport,
-               f.arrival_time, f.status, f.current_status
+               f.arrival_time, f.departure_time_utc, f.status, f.current_status
         FROM ticket t
         JOIN flight_status_view f
           ON t.airline_name = f.airline_name AND t.flight_num = f.flight_num

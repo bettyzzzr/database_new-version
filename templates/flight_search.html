@@ -5,13 +5,34 @@
     <h2>Search Upcoming Flights</h2>
     <form method="post">
         <label>Origin
-            <input name="origin" placeholder="NYC, JFK, New York" required>
+            <input name="origin" placeholder="NYC, JFK, New York" value="{{ request.form.get('origin', '') }}" required>
         </label>
         <label>Destination
-            <input name="destination" placeholder="Shanghai, SH, PVG" required>
+            <input name="destination" placeholder="Shanghai, SH, PVG" value="{{ request.form.get('destination', '') }}" required>
         </label>
         <label>Date
-            <input type="date" name="departure_date">
+            <input type="date" name="departure_date" value="{{ request.form.get('departure_date', '') }}">
+        </label>
+        <label>Airline
+            <input name="airline" placeholder="BlueSky Airlines" value="{{ request.form.get('airline', '') }}">
+        </label>
+        <label>Max price
+            <input type="number" min="0" step="0.01" name="max_price" value="{{ request.form.get('max_price', '') }}">
+        </label>
+        <label>Sort by
+            <select name="sort_by">
+                {% set selected_sort = request.form.get("sort_by", "departure_early") %}
+                <option value="departure_early" {% if selected_sort == "departure_early" %}selected{% endif %}>Earliest departure</option>
+                <option value="departure_late" {% if selected_sort == "departure_late" %}selected{% endif %}>Latest departure</option>
+                <option value="price_low" {% if selected_sort == "price_low" %}selected{% endif %}>Price low to high</option>
+                <option value="price_high" {% if selected_sort == "price_high" %}selected{% endif %}>Price high to low</option>
+                <option value="seats_left" {% if selected_sort == "seats_left" %}selected{% endif %}>Remaining seats</option>
+                <option value="duration_short" {% if selected_sort == "duration_short" %}selected{% endif %}>Shortest duration</option>
+            </select>
+        </label>
+        <label>
+            <input type="checkbox" name="available_only" value="1" {% if request.form.get("available_only") %}checked{% endif %}>
+            Available seats only
         </label>
         <button type="submit">Search</button>
     </form>
@@ -20,7 +41,51 @@
 {% if flights %}
 <section>
     <h2>Results</h2>
-    {% include "_flight_table.html" %}
+    <table>
+        <thead>
+            <tr>
+                <th>Airline</th><th>Flight</th><th>From</th><th>Departure</th>
+                <th>To</th><th>Arrival</th><th>Price</th><th>Seats Left</th>
+                <th>Recommendation</th><th>Status</th><th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for flight in flights %}
+            <tr>
+                <td>{{ flight.airline_name }}</td>
+                <td>{{ flight.flight_num }}</td>
+                <td>{{ flight.departure_airport }}</td>
+                <td>{{ flight.departure_time }}</td>
+                <td>{{ flight.arrival_airport }}</td>
+                <td>{{ flight.arrival_time }}</td>
+                <td>${{ "%.2f"|format(flight.price) }}</td>
+                <td>{{ flight.seats_left }}</td>
+                <td>{{ flight.recommendation_label }}</td>
+                <td>{{ flight.current_status|replace("_", " ")|title }}</td>
+                <td>
+                    {% if flight.seats_left <= 0 %}
+                    <form method="post" action="{{ url_for('customer.waitlist_join') }}">
+                        <input type="hidden" name="airline_name" value="{{ flight.airline_name }}">
+                        <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
+                        <button type="submit">Join Waitlist</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{{ url_for('customer.cart_add') }}">
+                        <input type="hidden" name="airline_name" value="{{ flight.airline_name }}">
+                        <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
+                        <button type="submit">Add to Cart</button>
+                    </form>
+                    <form method="post" action="{{ url_for('customer.wishlist_add') }}">
+                        <input type="hidden" name="airline_name" value="{{ flight.airline_name }}">
+                        <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
+                        <button type="submit">Wishlist</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </section>
 {% elif searched %}
 <p>No matching upcoming flights.</p>

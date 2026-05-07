@@ -13,6 +13,26 @@
         <label>Date
             <input type="date" name="departure_date">
         </label>
+        <label>Airline
+            <input name="airline" placeholder="BlueSky Airlines">
+        </label>
+        <label>Max price
+            <input type="number" min="0" step="0.01" name="max_price">
+        </label>
+        <label>Sort by
+            <select name="sort_by">
+                <option value="departure_early">Earliest departure</option>
+                <option value="departure_late">Latest departure</option>
+                <option value="price_low">Price low to high</option>
+                <option value="price_high">Price high to low</option>
+                <option value="seats_left">Remaining seats</option>
+                <option value="duration_short">Shortest duration</option>
+            </select>
+        </label>
+        <label>
+            <input type="checkbox" name="available_only" value="1">
+            Available seats only
+        </label>
         <button type="submit">Search to Purchase</button>
     </form>
 </section>
@@ -24,7 +44,8 @@
         <thead>
             <tr>
                 <th>Airline</th><th>Flight</th><th>From</th><th>Departure</th>
-                <th>To</th><th>Arrival</th><th>Price</th><th>Status</th><th>Action</th>
+                <th>To</th><th>Arrival</th><th>Price</th><th>Seats Left</th>
+                <th>Recommendation</th><th>Status</th><th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -37,13 +58,33 @@
                 <td>{{ flight.arrival_airport }}</td>
                 <td>{{ flight.arrival_time }}</td>
                 <td>${{ "%.2f"|format(flight.price) }}</td>
+                <td>{{ flight.seats_left }}</td>
+                <td>{{ flight.recommendation_label }}</td>
                 <td>{{ flight.current_status|replace("_", " ")|title }}</td>
                 <td>
+                    {% if flight.seats_left <= 0 %}
+                    <form method="post" action="{{ url_for('customer.waitlist_join') }}">
+                        <input type="hidden" name="airline_name" value="{{ flight.airline_name }}">
+                        <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
+                        <button type="submit">Join Waitlist</button>
+                    </form>
+                    {% else %}
                     <form method="post" action="{{ url_for('customer.purchase') }}">
                         <input type="hidden" name="airline_name" value="{{ flight.airline_name }}">
                         <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
                         <button type="submit">Purchase</button>
                     </form>
+                    <form method="post" action="{{ url_for('customer.cart_add') }}">
+                        <input type="hidden" name="airline_name" value="{{ flight.airline_name }}">
+                        <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
+                        <button type="submit">Add to Cart</button>
+                    </form>
+                    <form method="post" action="{{ url_for('customer.wishlist_add') }}">
+                        <input type="hidden" name="airline_name" value="{{ flight.airline_name }}">
+                        <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
+                        <button type="submit">Wishlist</button>
+                    </form>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
@@ -59,7 +100,7 @@
         <thead>
             <tr>
                 <th>Ticket</th><th>Airline</th><th>Flight</th><th>From</th>
-                <th>To</th><th>Departure</th><th>Status</th><th>Agent</th>
+                <th>To</th><th>Departure</th><th>Ticket</th><th>Flight</th><th>Agent</th><th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -71,14 +112,109 @@
                 <td>{{ ticket.departure_airport }}</td>
                 <td>{{ ticket.arrival_airport }}</td>
                 <td>{{ ticket.departure_time }}</td>
+                <td>{{ ticket.ticket_status|title }}</td>
                 <td>{{ ticket.current_status|replace("_", " ")|title }}</td>
                 <td>{{ ticket.booking_agent_email or "Direct" }}</td>
+                <td>
+                    {% if ticket.ticket_status == "active" and ticket.current_status == "upcoming" %}
+                    <form method="post" action="{{ url_for('customer.ticket_cancel') }}">
+                        <input type="hidden" name="ticket_id" value="{{ ticket.ticket_id }}">
+                        <button type="submit">Cancel</button>
+                    </form>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     {% else %}
     <p>No purchased tickets yet.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>Wishlist</h2>
+    {% if wishlist %}
+    <table>
+        <thead>
+            <tr>
+                <th>Airline</th><th>Flight</th><th>From</th><th>To</th><th>Departure</th><th>Price</th><th>Status</th><th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in wishlist %}
+            <tr>
+                <td>{{ item.airline_name }}</td>
+                <td>{{ item.flight_num }}</td>
+                <td>{{ item.departure_airport }}</td>
+                <td>{{ item.arrival_airport }}</td>
+                <td>{{ item.departure_time }}</td>
+                <td>${{ "%.2f"|format(item.price) }}</td>
+                <td>{{ item.current_status|replace("_", " ")|title }}</td>
+                <td>
+                    <form method="post" action="{{ url_for('customer.wishlist_remove') }}">
+                        <input type="hidden" name="wishlist_id" value="{{ item.wishlist_id }}">
+                        <button type="submit">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No wishlist items yet.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>Waitlist</h2>
+    {% if waitlist %}
+    <table>
+        <thead>
+            <tr>
+                <th>Airline</th><th>Flight</th><th>From</th><th>To</th><th>Departure</th><th>Waitlist Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in waitlist %}
+            <tr>
+                <td>{{ item.airline_name }}</td>
+                <td>{{ item.flight_num }}</td>
+                <td>{{ item.departure_airport }}</td>
+                <td>{{ item.arrival_airport }}</td>
+                <td>{{ item.departure_time }}</td>
+                <td>{{ item.status|title }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No waitlist records yet.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>Recent Searches</h2>
+    {% if recent_searches %}
+    <table>
+        <thead>
+            <tr><th>Origin</th><th>Destination</th><th>Date</th><th>Searched At</th></tr>
+        </thead>
+        <tbody>
+            {% for search in recent_searches %}
+            <tr>
+                <td>{{ search.origin_input }}</td>
+                <td>{{ search.destination_input }}</td>
+                <td>{{ search.search_date or "" }}</td>
+                <td>{{ search.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No recent searches yet.</p>
     {% endif %}
 </section>
 {% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section>
+    <h2>Itinerary Booking</h2>
+    <form method="post">
+        <label>Booking type
+            <select name="booking_type">
+                <option value="one_way" {% if booking_type == "one_way" %}selected{% endif %}>One way</option>
+                <option value="round_trip" {% if booking_type == "round_trip" %}selected{% endif %}>Round trip</option>
+                <option value="multi_city" {% if booking_type == "multi_city" %}selected{% endif %}>Multi-city</option>
+            </select>
+        </label>
+        {% for index in range(1, 4) %}
+        <fieldset class="role-fields">
+            <legend>Leg {{ index }}</legend>
+            <label>Origin
+                <input name="leg{{ index }}_origin" value="{{ request.form.get('leg' ~ index ~ '_origin', '') }}">
+            </label>
+            <label>Destination
+                <input name="leg{{ index }}_destination" value="{{ request.form.get('leg' ~ index ~ '_destination', '') }}">
+            </label>
+            <label>Date
+                <input type="date" name="leg{{ index }}_date" value="{{ request.form.get('leg' ~ index ~ '_date', '') }}">
+            </label>
+        </fieldset>
+        {% endfor %}
+        <button type="submit">Search Itinerary</button>
+    </form>
+</section>
+
+{% if legs %}
+{% set confirm = namespace(ready=true) %}
+{% for leg in legs %}
+    {% if not leg.flights %}
+        {% set confirm.ready = false %}
+    {% endif %}
+{% endfor %}
+
+<section>
+    <h2>Flight Options</h2>
+    <form method="post" action="{{ url_for('customer.itinerary_confirm') }}">
+        <input type="hidden" name="booking_type" value="{{ booking_type }}">
+        <input type="hidden" name="leg_count" value="{{ legs|length }}">
+        {% for leg in legs %}
+        <h3>Leg {{ leg.index }}: {{ leg.origin }} to {{ leg.destination }}</h3>
+        {% if leg.flights %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Select</th><th>Airline</th><th>Flight</th><th>From</th><th>Departure</th>
+                    <th>To</th><th>Arrival</th><th>Price</th><th>Seats Left</th><th>Recommendation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flight in leg.flights %}
+                <tr>
+                    <td>
+                        <input type="radio" name="leg_{{ leg.index }}" value="{{ flight.airline_name }}|||{{ flight.flight_num }}" required>
+                    </td>
+                    <td>{{ flight.airline_name }}</td>
+                    <td>{{ flight.flight_num }}</td>
+                    <td>{{ flight.departure_airport }}</td>
+                    <td>{{ flight.departure_time }}</td>
+                    <td>{{ flight.arrival_airport }}</td>
+                    <td>{{ flight.arrival_time }}</td>
+                    <td>${{ "%.2f"|format(flight.price) }}</td>
+                    <td>{{ flight.seats_left }}</td>
+                    <td>{{ flight.recommendation_label }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No available flights for this leg.</p>
+        {% endif %}
+        {% endfor %}
+        {% if confirm.ready %}
+        <button type="submit">Confirm Itinerary Booking</button>
+        {% endif %}
+    </form>
+</section>
+{% endif %}
+{% endblock %}

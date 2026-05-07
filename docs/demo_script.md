@@ -62,3 +62,44 @@
 3. Show that `flight_status_view` computes `upcoming`, `in_progress`, and `completed`.
 4. Open `flight_service.py`, `ticket_service.py`, and `staff_service.py`.
 5. Point out that user-facing reads use `flight_status_view`, not raw status computation in Python.
+
+## 9. Round 2 Customer Search Sorting and Filtering
+
+1. Log in as `alice@example.com` with password `customer123`.
+2. Go to Search Flights.
+3. Search origin `NYC` and destination `Shanghai`.
+4. Choose `Price low to high` in the sort dropdown and search again.
+5. Add a max price and search again.
+6. Show `Seats Left` and `Recommendation` in the result table.
+7. Point out that `BS102` is sold out in the seed data and shows `Join Waitlist`.
+
+## 10. Round 2 Wishlist, Cart, and Waitlist
+
+1. From the search results, add an available flight to the wishlist.
+2. Open Customer Dashboard and show the Wishlist section.
+3. Add an available flight to the cart.
+4. Open Cart.
+5. Confirm cart booking.
+6. Return to Customer Dashboard and show the new ticket.
+7. Join the waitlist for the sold-out `BS102` flight.
+8. Show the Waitlist section on Customer Dashboard.
+
+## 11. Round 2 Itinerary Booking
+
+1. Open Itinerary from the customer navigation.
+2. Choose `Round trip`.
+3. Enter Leg 1 as `NYC` to `Shanghai`.
+4. Enter Leg 2 as `Shanghai` to `NYC`.
+5. Search itinerary options.
+6. Select one flight for each leg.
+7. Confirm itinerary booking.
+8. Show that one booking order creates one ticket per selected leg.
+
+## 12. Round 2 Cancellation and Refund
+
+1. Open Customer Dashboard.
+2. Find an active upcoming ticket with departure more than 24 hours away.
+3. Click Cancel.
+4. Show that the ticket status becomes `Cancelled`.
+5. Show that the refund request amount is 80% of `sold_price`.
+6. If a waiting customer exists for that flight, show that the first waiting row becomes `notified`.
