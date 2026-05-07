@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Air Ticket Reservation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Air Ticket Reservation System</h1>
+        <nav>
+            <a href="{{ url_for('public.index') }}">Home</a>
+            <a href="{{ url_for('public.flight_search') }}">Search Flights</a>
+            <a href="{{ url_for('public.flight_status') }}">Flight Status</a>
+            {% if session.get('role') == 'customer' %}
+                <a href="{{ url_for('customer.dashboard') }}">Customer Dashboard</a>
+            {% elif session.get('role') == 'agent' %}
+                <a href="{{ url_for('agent.dashboard') }}">Agent Dashboard</a>
+            {% elif session.get('role') == 'staff' %}
+                <a href="{{ url_for('staff.dashboard') }}">Staff Dashboard</a>
+                <a href="{{ url_for('staff.admin') }}">Staff Admin</a>
+            {% endif %}
+            {% if session.get('role') %}
+                <span>{{ session.get('role') }}: {{ session.get('user_id') }}</span>
+                <a href="{{ url_for('auth.logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+                <a href="{{ url_for('auth.register') }}">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <section class="messages">
+                    {% for category, message in messages %}
+                        <p class="{{ category }}">{{ message }}</p>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

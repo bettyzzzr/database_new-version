@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section>
+    <h2>Search Upcoming Flights</h2>
+    <form method="post">
+        <label>Origin
+            <input name="origin" placeholder="NYC, JFK, New York" required>
+        </label>
+        <label>Destination
+            <input name="destination" placeholder="Shanghai, SH, PVG" required>
+        </label>
+        <label>Date
+            <input type="date" name="departure_date">
+        </label>
+        <button type="submit">Search</button>
+    </form>
+</section>
+
+{% if flights %}
+<section>
+    <h2>Results</h2>
+    {% include "_flight_table.html" %}
+</section>
+{% elif searched %}
+<p>No matching upcoming flights.</p>
+{% endif %}
+{% endblock %}

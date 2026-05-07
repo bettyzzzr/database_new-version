@@ -1,0 +1,30 @@
+<table>
+    <thead>
+        <tr>
+            <th>Airline</th>
+            <th>Flight</th>
+            <th>From</th>
+            <th>Departure</th>
+            <th>To</th>
+            <th>Arrival</th>
+            <th>Price</th>
+            <th>Staff Status</th>
+            <th>Current Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for flight in flights %}
+        <tr>
+            <td>{{ flight.airline_name }}</td>
+            <td>{{ flight.flight_num }}</td>
+            <td>{{ flight.departure_airport }}</td>
+            <td>{{ flight.departure_time }}</td>
+            <td>{{ flight.arrival_airport }}</td>
+            <td>{{ flight.arrival_time }}</td>
+            <td>${{ "%.2f"|format(flight.price) }}</td>
+            <td>{{ flight.status|replace("_", " ")|title }}</td>
+            <td>{{ flight.current_status|replace("_", " ")|title }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

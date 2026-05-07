@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section>
+    <h2>Register</h2>
+    {% set selected_role = request.form.get("role", "customer") %}
+    <form method="post">
+        <label>Account type
+            <select name="role" id="account-role" required>
+                <option value="customer" {% if selected_role == "customer" %}selected{% endif %}>Customer</option>
+                <option value="agent" {% if selected_role == "agent" %}selected{% endif %}>Booking Agent</option>
+                <option value="staff" {% if selected_role == "staff" %}selected{% endif %}>Airline Staff</option>
+            </select>
+        </label>
+
+        <fieldset class="role-fields" data-role-section="customer" {% if selected_role != "customer" %}hidden{% endif %}>
+            <legend>Customer information</legend>
+            <label>Email
+                <input type="email" name="email" value="{{ request.form.get('email', '') }}" data-required>
+            </label>
+            <label>Customer name
+                <input name="name" value="{{ request.form.get('name', '') }}" data-required>
+            </label>
+            <label>Passport number
+                <input name="passport_number" value="{{ request.form.get('passport_number', '') }}" data-required>
+            </label>
+            <label>Passport expiration
+                <input type="date" name="passport_expiration" value="{{ request.form.get('passport_expiration', '') }}" data-required>
+            </label>
+            <label>Passport country
+                <input name="passport_country" value="{{ request.form.get('passport_country', '') }}" data-required>
+            </label>
+        </fieldset>
+
+        <fieldset class="role-fields" data-role-section="agent" {% if selected_role != "agent" %}hidden{% endif %}>
+            <legend>Booking agent information</legend>
+            <label>Email
+                <input type="email" name="email" value="{{ request.form.get('email', '') }}" data-required>
+            </label>
+            <label>Agent name
+                <input name="name" value="{{ request.form.get('name', '') }}" data-required>
+            </label>
+        </fieldset>
+
+        <fieldset class="role-fields" data-role-section="staff" {% if selected_role != "staff" %}hidden{% endif %}>
+            <legend>Airline staff information</legend>
+            <label>Email
+                <input type="email" name="email" value="{{ request.form.get('email', '') }}" data-required>
+            </label>
+            <label>Username
+                <input name="username" value="{{ request.form.get('username', '') }}" data-required>
+            </label>
+            <label>First name
+                <input name="first_name" value="{{ request.form.get('first_name', '') }}" data-required>
+            </label>
+            <label>Last name
+                <input name="last_name" value="{{ request.form.get('last_name', '') }}" data-required>
+            </label>
+            <label>Airline company
+                <input name="airline_name" value="{{ request.form.get('airline_name', '') }}" placeholder="BlueSky Airlines" data-required>
+            </label>
+        </fieldset>
+
+        <label>Password
+            <input type="password" name="password" required>
+        </label>
+        <button type="submit">Register</button>
+    </form>
+</section>
+
+<script>
+    const roleSelect = document.querySelector("#account-role");
+    const roleSections = document.querySelectorAll("[data-role-section]");
+
+    function syncRoleFields() {
+        roleSections.forEach((section) => {
+            const isActive = section.dataset.roleSection === roleSelect.value;
+            section.hidden = !isActive;
+            section.querySelectorAll("input").forEach((input) => {
+                input.disabled = !isActive;
+                input.required = isActive && input.hasAttribute("data-required");
+            });
+        });
+    }
+
+    roleSelect.addEventListener("change", syncRoleFields);
+    syncRoleFields();
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section>
+    <h2>Agent Dashboard</h2>
+    <table>
+        <tr><th>Tickets sold in last 30 days</th><td>{{ summary.tickets_sold }}</td></tr>
+        <tr><th>Total commission</th><td>${{ "%.2f"|format(summary.total_commission) }}</td></tr>
+        <tr><th>Average commission</th><td>${{ "%.2f"|format(summary.average_commission) }}</td></tr>
+    </table>
+</section>
+
+<section>
+    <h2>Search Flights for Customer</h2>
+    <form method="post">
+        <label>Origin
+            <input name="origin" placeholder="NYC or JFK" required>
+        </label>
+        <label>Destination
+            <input name="destination" placeholder="Shanghai or PVG" required>
+        </label>
+        <label>Date
+            <input type="date" name="departure_date">
+        </label>
+        <button type="submit">Search</button>
+    </form>
+</section>
+
+{% if flights %}
+<section>
+    <h2>Available Flights</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Airline</th><th>Flight</th><th>From</th><th>Departure</th>
+                <th>To</th><th>Arrival</th><th>Price</th><th>Status</th><th>Customer</th><th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for flight in flights %}
+            <tr>
+                <td>{{ flight.airline_name }}</td>
+                <td>{{ flight.flight_num }}</td>
+                <td>{{ flight.departure_airport }}</td>
+                <td>{{ flight.departure_time }}</td>
+                <td>{{ flight.arrival_airport }}</td>
+                <td>{{ flight.arrival_time }}</td>
+                <td>${{ "%.2f"|format(flight.price) }}</td>
+                <td>{{ flight.current_status|replace("_", " ")|title }}</td>
+                <td colspan="2">
+                    <form method="post" action="{{ url_for('agent.purchase') }}">
+                        <input type="hidden" name="airline_name" value="{{ flight.airline_name }}">
+                        <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
+                        <input type="email" name="customer_email" placeholder="alice@example.com" required>
+                        <button type="submit">Purchase</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+<section>
+    <h2>Tickets Sold By This Agent</h2>
+    {% if tickets %}
+    <table>
+        <thead>
+            <tr>
+                <th>Ticket</th><th>Customer</th><th>Airline</th><th>Flight</th>
+                <th>Departure</th><th>Status</th><th>Sold Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in tickets %}
+            <tr>
+                <td>{{ ticket.ticket_id }}</td>
+                <td>{{ ticket.customer_email }}</td>
+                <td>{{ ticket.airline_name }}</td>
+                <td>{{ ticket.flight_num }}</td>
+                <td>{{ ticket.departure_time }}</td>
+                <td>{{ ticket.current_status|replace("_", " ")|title }}</td>
+                <td>${{ "%.2f"|format(ticket.sold_price) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No agent tickets yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section>
+    <h2>Staff Dashboard</h2>
+    <p>Airline: {{ session.airline_name }}</p>
+    <table>
+        <tr><th>Upcoming</th><td>{{ summary.upcoming_count or 0 }}</td></tr>
+        <tr><th>In Progress</th><td>{{ summary.in_progress_count or 0 }}</td></tr>
+        <tr><th>Completed</th><td>{{ summary.completed_count or 0 }}</td></tr>
+        <tr><th>Delayed</th><td>{{ summary.delayed_count or 0 }}</td></tr>
+        <tr><th>Cancelled</th><td>{{ summary.cancelled_count or 0 }}</td></tr>
+    </table>
+</section>
+
+<section>
+    <h2>Airline Flights</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Flight</th><th>From</th><th>Departure</th><th>To</th><th>Arrival</th>
+                <th>Staff Status</th><th>Current Status</th><th>Passengers</th><th>Operator Update</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for flight in flights %}
+            <tr>
+                <td>{{ flight.flight_num }}</td>
+                <td>{{ flight.departure_airport }}</td>
+                <td>{{ flight.departure_time }}</td>
+                <td>{{ flight.arrival_airport }}</td>
+                <td>{{ flight.arrival_time }}</td>
+                <td>{{ flight.status|replace("_", " ")|title }}</td>
+                <td>{{ flight.current_status|replace("_", " ")|title }}</td>
+                <td>
+                    <form method="post">
+                        <input type="hidden" name="action" value="passengers">
+                        <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
+                        <button type="submit">Show</button>
+                    </form>
+                </td>
+                <td>
+                    <form method="post" action="{{ url_for('staff.status_update') }}">
+                        <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
+                        <select name="status">
+                            <option value="scheduled">Scheduled</option>
+                            <option value="delayed">Delayed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <button type="submit">Update</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+{% if passenger_flight_num %}
+<section>
+    <h2>Passengers for {{ passenger_flight_num }}</h2>
+    {% if passengers %}
+    <table>
+        <thead>
+            <tr><th>Ticket</th><th>Email</th><th>Name</th><th>Agent</th><th>Purchase Date</th></tr>
+        </thead>
+        <tbody>
+            {% for passenger in passengers %}
+            <tr>
+                <td>{{ passenger.ticket_id }}</td>
+                <td>{{ passenger.email }}</td>
+                <td>{{ passenger.name }}</td>
+                <td>{{ passenger.booking_agent_email or "Direct" }}</td>
+                <td>{{ passenger.purchase_date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No passengers for this flight.</p>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

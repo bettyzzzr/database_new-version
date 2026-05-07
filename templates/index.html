@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section>
+    <h2>Home</h2>
+    <p>Search flights by airport, city, or city alias. Multi-airport cities such as NYC, Shanghai, and Tokyo are resolved on the server.</p>
+    <p>
+        <a class="button" href="{{ url_for('public.flight_search') }}">Search upcoming flights</a>
+        <a class="button" href="{{ url_for('public.flight_status') }}">Check flight status</a>
+    </p>
+</section>
+{% endblock %}

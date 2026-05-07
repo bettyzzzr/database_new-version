@@ -1,0 +1,118 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: #222;
+    background: #f6f7f8;
+}
+
+header {
+    background: #22304a;
+    color: white;
+    padding: 1rem 2rem;
+}
+
+header h1 {
+    margin: 0 0 0.75rem;
+    font-size: 1.5rem;
+}
+
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+nav a,
+.button,
+button {
+    background: #2f6fed;
+    color: white;
+    border: 0;
+    border-radius: 4px;
+    padding: 0.45rem 0.7rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+nav span {
+    color: #dbe5ff;
+}
+
+main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+section {
+    margin-bottom: 1.5rem;
+}
+
+form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: end;
+}
+
+fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.role-fields {
+    display: contents;
+}
+
+legend {
+    width: 100%;
+    font-weight: bold;
+}
+
+label {
+    display: grid;
+    gap: 0.25rem;
+    font-weight: bold;
+}
+
+input,
+select {
+    padding: 0.45rem;
+    border: 1px solid #b9c0ca;
+    border-radius: 4px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+th,
+td {
+    border: 1px solid #d9dde4;
+    padding: 0.55rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background: #edf1f7;
+}
+
+.messages p {
+    padding: 0.7rem;
+    border-radius: 4px;
+}
+
+.success {
+    background: #e6f5e8;
+    color: #146b25;
+}
+
+.error {
+    background: #fde8e8;
+    color: #9b1c1c;
+}
