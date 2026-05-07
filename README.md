@@ -7,8 +7,8 @@ CSCI-SHU 213 Database Final Project rebuilt with Flask and MySQL.
 - `app.py` creates the Flask app and registers blueprints only.
 - `routes/` handles form input, session checks, redirects, flashes, and rendering.
 - `services/` contains SQL queries and business rules.
-- `schema.sql` rebuilds the database structure and `flight_status_view`.
-- `seed.sql` loads demo data for Round 1.
+- `schema.sql` rebuilds the database structure, Round 2 tables, timezone metadata, and `flight_status_view`.
+- `seed.sql` loads demo data for the presentation workflow.
 - `templates/` contains simple forms, tables, navigation, and messages.
 
 ## Database Setup
@@ -19,6 +19,8 @@ Log in to MySQL and run:
 mysql -u root -p < schema.sql
 mysql -u root -p air_ticket_reservation < seed.sql
 ```
+
+For an existing Round 1 database, apply the migration files in `migrations/` instead of rebuilding from scratch.
 
 If your MySQL user or database settings differ, set environment variables before running Flask:
 
@@ -68,7 +70,7 @@ All demo passwords are intentionally simple for presentation.
 7. `schema.sql` to show normalized tables and dynamic status view.
 8. `seed.sql` to show demo data.
 
-## Round 1 Scope
+## Project Scope
 
 Implemented:
 
@@ -77,16 +79,18 @@ Implemented:
 - Public flight status check
 - Customer dashboard, ticket list, flight search, and purchase
 - Round-trip booking from Search Flights
+- Trip cart booking
+- Refund request flow
+- Waitlist and wishlist flows
+- Recent customer search history
+- Customer spending analytics
 - Booking agent dashboard, authorized purchase, sold-ticket list, and commission summary
 - Staff dashboard, airline flight list, passenger list, admin actions, and operator status updates
+- Staff city/city-pair analysis, route opportunity alerts, audit log, and disruption assistant
 - Audit logging for login, purchases, flight creation, airport/airplane changes, agent association, and status updates
 
-Not implemented yet:
+Future extensions:
 
-- Trip cart
-- Refunds
-- Waitlist
-- Advanced sorting/filtering
-- City analysis dashboard
-- Load factor dashboard
-- Operational disruption assistant
+- Multi-city itineraries beyond one-way and round-trip
+- Automated refund approval/rejection
+- Waitlist notification delivery outside the app

@@ -6,7 +6,7 @@ ALTER TABLE ticket
 CREATE TABLE IF NOT EXISTS booking_order (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
     customer_email VARCHAR(255) NOT NULL,
-    booking_type ENUM('one_way', 'round_trip', 'multi_city') NOT NULL,
+    booking_type ENUM('one_way', 'round_trip') NOT NULL,
     total_price DECIMAL(10, 2) NOT NULL,
     order_status ENUM('confirmed', 'cancelled') NOT NULL DEFAULT 'confirmed',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

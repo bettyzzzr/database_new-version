@@ -11,7 +11,7 @@ CREATE TABLE city_alias (
     alias_id INT AUTO_INCREMENT PRIMARY KEY,
     city_id INT NOT NULL,
     alias_name VARCHAR(100) NOT NULL UNIQUE,
-    FOREIGN KEY (city_id) REFERENCES city(city_id),
+    FOREIGN KEY (city_id) REFERENCES city(city_id)
         ON DELETE CASCADE
 );
 
@@ -118,7 +118,7 @@ CREATE TABLE ticket (
 CREATE TABLE booking_order (
     order_id INT AUTO_INCREMENT PRIMARY KEY,
     customer_email VARCHAR(255) NOT NULL,
-    booking_type ENUM('one_way', 'round_trip', 'multi_city') NOT NULL,
+    booking_type ENUM('one_way', 'round_trip') NOT NULL,
     total_price DECIMAL(10, 2) NOT NULL,
     order_status ENUM('confirmed', 'cancelled') NOT NULL DEFAULT 'confirmed',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -3,7 +3,6 @@ from datetime import date
 
 from db import get_db
 from services.audit_service import log_action
-from services.flight_service import search_upcoming_flights
 from services.ticket_service import insert_direct_ticket, validate_customer_purchase
 
 VALID_BOOKING_TYPES = {"one_way", "round_trip"}
@@ -20,7 +19,7 @@ def _parse_iso_date(value, message):
         raise ValueError(message) from exc
 
 
-def itinerary_leg_count(booking_type, requested_count=None):
+def itinerary_leg_count(booking_type):
     """Return the allowed number of itinerary legs for the selected booking type."""
     if booking_type not in VALID_BOOKING_TYPES:
         raise ValueError("Choose a valid booking type.")
@@ -30,9 +29,9 @@ def itinerary_leg_count(booking_type, requested_count=None):
     return 2
 
 
-def build_itinerary_legs(booking_type, raw_legs, requested_count=None):
+def build_itinerary_legs(booking_type, raw_legs):
     """Validate and normalize itinerary leg inputs."""
-    required = raw_legs[:itinerary_leg_count(booking_type, requested_count)]
+    required = raw_legs[:itinerary_leg_count(booking_type)]
 
     if not all(_is_complete_leg(leg) for leg in required):
         raise ValueError("Please fill every required itinerary leg.")
@@ -51,20 +50,6 @@ def build_itinerary_legs(booking_type, raw_legs, requested_count=None):
         return_date = _parse_iso_date(legs[1]["date"], "Enter a valid date for leg 2.")
         if return_date < outbound_date:
             raise ValueError("Round-trip leg 2 date cannot be earlier than leg 1.")
-    return legs
-
-
-def search_itinerary_options(booking_type, raw_legs, requested_count=None):
-    """Search available flight options for each itinerary leg."""
-    legs = build_itinerary_legs(booking_type, raw_legs, requested_count)
-    for leg in legs:
-        leg["flights"] = search_upcoming_flights(
-            leg["origin"],
-            leg["destination"],
-            leg["date"],
-            available_only=True,
-            sort_by="departure_early",
-        )
     return legs
 
 

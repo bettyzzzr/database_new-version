@@ -1,6 +1,10 @@
 from flask import Blueprint, flash, render_template, request, session
 
-from services.flight_service import search_flight_statuses, search_upcoming_flights
+from services.flight_service import (
+    get_lowest_price_calendar,
+    search_flight_statuses,
+    search_upcoming_flights,
+)
 from services.frequent_search_service import record_search
 from services.itinerary_service import build_itinerary_legs
 
@@ -32,9 +36,12 @@ def index():
 @public_bp.route("/flights/search", methods=["GET", "POST"])
 def flight_search():
     flights = []
+    price_calendar = []
     trip_legs = []
     searched = False
+    search_action = request.form.get("action", "search")
     booking_type = request.form.get("booking_type", "one_way")
+    calendar_days = request.form.get("calendar_days", "30")
     if request.method == "POST":
         searched = True
         origin = request.form.get("origin", "")
@@ -47,7 +54,21 @@ def flight_search():
         sort_by = request.form.get("sort_by", "departure_early")
         try:
             booking_type = _selected_booking_type()
-            if booking_type == "round_trip":
+            if search_action == "price_calendar":
+                price_calendar = get_lowest_price_calendar(
+                    origin,
+                    destination,
+                    departure_date,
+                    calendar_days,
+                    airline,
+                    max_price,
+                    True,
+                )
+                if not price_calendar:
+                    flash("Origin or destination was not found.", "error")
+                elif not any(day["lowest_price"] is not None for day in price_calendar):
+                    flash("No available upcoming flights were found for that calendar range.", "error")
+            elif booking_type == "round_trip":
                 trip_legs = _round_trip_legs(origin, destination, departure_date, return_date)
                 for leg in trip_legs:
                     leg["flights"] = search_upcoming_flights(
@@ -80,9 +101,12 @@ def flight_search():
     return render_template(
         "flight_search.html",
         flights=flights,
+        price_calendar=price_calendar,
         trip_legs=trip_legs,
         searched=searched,
+        search_action=search_action,
         booking_type=booking_type,
+        calendar_days=calendar_days,
     )
 
 

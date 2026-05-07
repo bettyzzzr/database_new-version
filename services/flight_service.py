@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 from functools import lru_cache
 
@@ -12,6 +13,8 @@ SORT_OPTIONS = {
     "seats_left": "seats_left DESC",
     "duration_short": "duration_minutes ASC",
 }
+
+PRICE_CALENDAR_DAY_OPTIONS = {7, 14, 30, 60}
 
 
 def _placeholders(values):
@@ -107,6 +110,31 @@ def _normalize_max_price(max_price):
     return value
 
 
+def _parse_calendar_start_date(value):
+    if not value:
+        return date.today()
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError("Enter a valid calendar start date.") from exc
+
+
+def _normalize_calendar_days(days):
+    try:
+        value = int(days or 30)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Choose a valid calendar range.") from exc
+    if value not in PRICE_CALENDAR_DAY_OPTIONS:
+        raise ValueError("Choose a valid calendar range.")
+    return value
+
+
+def _calendar_row_date(value):
+    if isinstance(value, date):
+        return value
+    return date.fromisoformat(str(value))
+
+
 def search_upcoming_flights(
     origin_input,
     destination_input,
@@ -165,6 +193,76 @@ def search_upcoming_flights(
     order_by = SORT_OPTIONS.get(sort_by, SORT_OPTIONS["departure_early"])
     sql += f" ORDER BY {order_by}, f.airline_name ASC, f.flight_num ASC"
     return _add_recommendation_labels(fetch_all(sql, params))
+
+
+def get_lowest_price_calendar(
+    origin_input,
+    destination_input,
+    start_date=None,
+    days=30,
+    airline=None,
+    max_price=None,
+    available_only=True,
+):
+    """Return the lowest upcoming flight price for each day in a date window."""
+    origin_input = _clean_text(origin_input)
+    destination_input = _clean_text(destination_input)
+    airline = _clean_text(airline)
+    if not origin_input or not destination_input:
+        raise ValueError("Enter both origin and destination to view the price calendar.")
+
+    origin_airports = resolve_location_to_airports(origin_input)
+    destination_airports = resolve_location_to_airports(destination_input)
+    if not origin_airports or not destination_airports:
+        return []
+
+    start = _parse_calendar_start_date(start_date)
+    day_count = _normalize_calendar_days(days)
+    end = start + timedelta(days=day_count)
+    max_price = _normalize_max_price(max_price)
+
+    params = []
+    sql = f"""
+        SELECT
+            DATE(f.departure_time) AS travel_date,
+            MIN(f.price) AS lowest_price,
+            COUNT(*) AS flight_count,
+            MAX(a.seats - COALESCE(tc.active_tickets, 0)) AS best_seats_left
+        FROM flight_status_view f
+        {_flight_capacity_join()}
+        WHERE current_status = 'upcoming'
+          AND departure_airport IN ({_placeholders(origin_airports)})
+          AND arrival_airport IN ({_placeholders(destination_airports)})
+          AND DATE(f.departure_time) >= %s
+          AND DATE(f.departure_time) < %s
+    """
+    params.extend(origin_airports)
+    params.extend(destination_airports)
+    params.extend([start, end])
+    if airline:
+        sql += " AND f.airline_name = %s"
+        params.append(airline)
+    if max_price is not None:
+        sql += " AND f.price <= %s"
+        params.append(max_price)
+    if available_only:
+        sql += " AND a.seats - COALESCE(tc.active_tickets, 0) > 0"
+    sql += " GROUP BY DATE(f.departure_time) ORDER BY travel_date ASC"
+
+    prices_by_date = {_calendar_row_date(row["travel_date"]): row for row in fetch_all(sql, params)}
+    calendar = []
+    for offset in range(day_count):
+        travel_date = start + timedelta(days=offset)
+        row = prices_by_date.get(travel_date)
+        calendar.append(
+            {
+                "travel_date": travel_date,
+                "lowest_price": row["lowest_price"] if row else None,
+                "flight_count": row["flight_count"] if row else 0,
+                "best_seats_left": row["best_seats_left"] if row else 0,
+            }
+        )
+    return calendar
 
 
 def search_flight_statuses(airline_name="", flight_num=""):
