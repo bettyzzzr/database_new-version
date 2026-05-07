@@ -6,8 +6,7 @@ from services.audit_service import log_action
 from services.flight_service import search_upcoming_flights
 from services.ticket_service import insert_direct_ticket, validate_customer_purchase
 
-VALID_BOOKING_TYPES = {"one_way", "round_trip", "multi_city"}
-MAX_MULTI_CITY_LEGS = 6
+VALID_BOOKING_TYPES = {"one_way", "round_trip"}
 
 
 def _is_complete_leg(leg):
@@ -28,14 +27,7 @@ def itinerary_leg_count(booking_type, requested_count=None):
 
     if booking_type == "one_way":
         return 1
-    if booking_type == "round_trip":
-        return 2
-
-    try:
-        count = int(requested_count or 3)
-    except (TypeError, ValueError):
-        count = 3
-    return max(2, min(count, MAX_MULTI_CITY_LEGS))
+    return 2
 
 
 def build_itinerary_legs(booking_type, raw_legs, requested_count=None):

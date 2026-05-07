@@ -12,12 +12,7 @@ from services.analytics_service import get_customer_custom_spending, get_custome
 from services.customer_schema_service import ensure_customer_feature_schema
 from services.flight_service import search_upcoming_flights
 from services.frequent_search_service import get_recent_searches, record_search
-from services.itinerary_service import (
-    MAX_MULTI_CITY_LEGS,
-    confirm_itinerary_booking,
-    itinerary_leg_count,
-    search_itinerary_options,
-)
+from services.itinerary_service import confirm_itinerary_booking
 from services.refund_service import cancel_ticket_for_refund
 from services.ticket_service import get_customer_tickets, purchase_ticket
 from services.waitlist_service import get_customer_waitlist, join_waitlist
@@ -48,17 +43,6 @@ def _flight_search_form():
         "available_only": bool(request.form.get("available_only")),
         "sort_by": request.form.get("sort_by", "departure_early"),
     }
-
-
-def _raw_itinerary_legs(total_legs):
-    return [
-        {
-            "origin": request.form.get(f"leg{index}_origin", ""),
-            "destination": request.form.get(f"leg{index}_destination", ""),
-            "date": request.form.get(f"leg{index}_date", ""),
-        }
-        for index in range(1, total_legs + 1)
-    ]
 
 
 @customer_bp.route("/dashboard", methods=["GET", "POST"])
@@ -234,48 +218,21 @@ def ticket_cancel():
     return redirect(url_for("customer.dashboard"))
 
 
-@customer_bp.route("/itinerary", methods=["GET", "POST"])
+@customer_bp.route("/round-trip/confirm", methods=["POST"])
 @customer_required
-def itinerary():
-    legs = []
-    booking_type = request.form.get("booking_type", "one_way")
-    leg_count = 1
-    if request.method == "POST":
-        try:
-            leg_count = itinerary_leg_count(booking_type, request.form.get("leg_count"))
-            legs = search_itinerary_options(booking_type, _raw_itinerary_legs(MAX_MULTI_CITY_LEGS), leg_count)
-            if any(not leg["flights"] for leg in legs):
-                flash("One or more itinerary legs have no available flights.", "error")
-        except ValueError as exc:
-            flash(str(exc), "error")
-    else:
-        leg_count = itinerary_leg_count(booking_type)
-    return render_template(
-        "customer_itinerary.html",
-        legs=legs,
-        booking_type=booking_type,
-        leg_count=leg_count,
-        max_multi_city_legs=MAX_MULTI_CITY_LEGS,
-    )
-
-
-@customer_bp.route("/itinerary/confirm", methods=["POST"])
-@customer_required
-def itinerary_confirm():
-    booking_type = request.form.get("booking_type", "one_way")
+def round_trip_confirm():
     selected = [
         value for key, value in sorted(request.form.items())
-        if key.startswith("leg_") and key != "leg_count"
+        if key.startswith("leg_")
     ]
     try:
-        expected_segments = int(request.form.get("leg_count", "0") or 0)
         order_id, total_price = confirm_itinerary_booking(
             session["user_id"],
-            booking_type,
+            "round_trip",
             selected,
-            expected_segments,
+            2,
         )
-        flash(f"Itinerary booked. Order {order_id}, total ${total_price}.", "success")
+        flash(f"Round trip booked. Order {order_id}, total ${total_price}.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
-    return redirect(url_for("customer.itinerary"))
+    return redirect(url_for("public.flight_search"))

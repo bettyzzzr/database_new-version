@@ -3,7 +3,14 @@
 {% block content %}
 <section>
     <h2>Search Upcoming Flights</h2>
-    <form method="post">
+    <form method="post" id="flight-search-form">
+        {% set selected_booking_type = booking_type or request.form.get("booking_type", "one_way") %}
+        <label>Trip type
+            <select name="booking_type" id="booking_type">
+                <option value="one_way" {% if selected_booking_type == "one_way" %}selected{% endif %}>One way</option>
+                <option value="round_trip" {% if selected_booking_type == "round_trip" %}selected{% endif %}>Round trip</option>
+            </select>
+        </label>
         <label>Origin
             <input name="origin" placeholder="NYC, JFK, New York" value="{{ request.form.get('origin', '') }}">
         </label>
@@ -12,6 +19,9 @@
         </label>
         <label>Date
             <input type="date" name="departure_date" value="{{ request.form.get('departure_date', '') }}">
+        </label>
+        <label id="return-date-field">Return date
+            <input type="date" name="return_date" value="{{ request.form.get('return_date', '') }}">
         </label>
         <label>Airline
             <input name="airline" placeholder="BlueSky Airlines" value="{{ request.form.get('airline', '') }}">
@@ -38,7 +48,56 @@
     </form>
 </section>
 
-{% if flights %}
+{% if selected_booking_type == "round_trip" and trip_legs %}
+{% set confirm = namespace(ready=true) %}
+{% for leg in trip_legs %}
+    {% if not leg.flights %}
+        {% set confirm.ready = false %}
+    {% endif %}
+{% endfor %}
+
+<section>
+    <h2>Round Trip Results</h2>
+    <form method="post" action="{{ url_for('customer.round_trip_confirm') }}">
+        {% for leg in trip_legs %}
+        <h3>{% if leg.index == 1 %}Outbound{% else %}Return{% endif %}: {{ leg.origin }} to {{ leg.destination }}</h3>
+        {% if leg.flights %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Select</th><th>Airline</th><th>Flight</th><th>From</th><th>Departure</th>
+                    <th>To</th><th>Arrival</th><th>Price</th><th>Seats Left</th><th>Recommendation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flight in leg.flights %}
+                <tr>
+                    <td>
+                        <input type="radio" name="leg_{{ leg.index }}" value="{{ flight.airline_name }}|||{{ flight.flight_num }}" required>
+                    </td>
+                    <td>{{ flight.airline_name }}</td>
+                    <td>{{ flight.flight_num }}</td>
+                    <td>{{ flight.departure_airport }}</td>
+                    <td>{{ flight.departure_time }}</td>
+                    <td>{{ flight.arrival_airport }}</td>
+                    <td>{{ flight.arrival_time }}</td>
+                    <td>${{ "%.2f"|format(flight.price) }}</td>
+                    <td>{{ flight.seats_left }}</td>
+                    <td>{{ flight.recommendation_label }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No available flights for this leg.</p>
+        {% endif %}
+        {% endfor %}
+        {% if confirm.ready %}
+        <button type="submit">Confirm Round Trip Booking</button>
+        {% endif %}
+    </form>
+</section>
+{% elif flights %}
 <section>
     <h2>Results</h2>
     <table>
@@ -90,4 +149,18 @@
 {% elif searched %}
 <p>No matching upcoming flights.</p>
 {% endif %}
+
+<script>
+    (function () {
+        const bookingTypeInput = document.getElementById("booking_type");
+        const returnDateField = document.getElementById("return-date-field");
+
+        function syncTripType() {
+            returnDateField.hidden = bookingTypeInput.value !== "round_trip";
+        }
+
+        bookingTypeInput.addEventListener("change", syncTripType);
+        syncTripType();
+    }());
+</script>
 {% endblock %}

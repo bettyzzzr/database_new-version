@@ -76,6 +76,7 @@ Implemented:
 - Public flight search by airport, airport name, city name, or alias
 - Public flight status check
 - Customer dashboard, ticket list, flight search, and purchase
+- Round-trip booking from Search Flights
 - Booking agent dashboard, authorized purchase, sold-ticket list, and commission summary
 - Staff dashboard, airline flight list, passenger list, admin actions, and operator status updates
 - Audit logging for login, purchases, flight creation, airport/airplane changes, agent association, and status updates
@@ -83,7 +84,6 @@ Implemented:
 Not implemented yet:
 
 - Trip cart
-- Itinerary booking
 - Refunds
 - Waitlist
 - Advanced sorting/filtering

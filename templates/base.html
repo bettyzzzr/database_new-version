@@ -16,7 +16,6 @@
             {% if session.get('role') == 'customer' %}
                 <a href="{{ url_for('customer.dashboard') }}">Customer Dashboard</a>
                 <a href="{{ url_for('customer.cart') }}">Cart</a>
-                <a href="{{ url_for('customer.itinerary') }}">Itinerary</a>
             {% elif session.get('role') == 'agent' %}
                 <a href="{{ url_for('agent.dashboard') }}">Agent Dashboard</a>
             {% elif session.get('role') == 'staff' %}

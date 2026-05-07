@@ -84,15 +84,15 @@
 7. Join the waitlist for the sold-out `BS102` flight.
 8. Show the Waitlist section on Customer Dashboard.
 
-## 11. Round 2 Itinerary Booking
+## 11. Round 2 Round-Trip Booking
 
-1. Open Itinerary from the customer navigation.
+1. Open Search Flights from the customer navigation.
 2. Choose `Round trip`.
-3. Enter Leg 1 as `NYC` to `Shanghai`.
-4. Enter Leg 2 as `Shanghai` to `NYC`.
-5. Search itinerary options.
-6. Select one flight for each leg.
-7. Confirm itinerary booking.
+3. Enter origin `NYC` and destination `Shanghai`.
+4. Choose a departure date and return date.
+5. Search flights.
+6. Select one outbound flight and one return flight.
+7. Confirm round-trip booking.
 8. Show that one booking order creates one ticket per selected leg.
 
 ## 12. Round 2 Cancellation and Refund
@@ -138,7 +138,7 @@
 
 1. Open Audit Log.
 2. Show recent customer, agent, and staff actions.
-3. Point out actions such as purchase, cart booking, itinerary booking, refund request, waitlist join, wishlist add/remove, flight creation, status update, city add, alias add, airport add, and agent association.
+3. Point out actions such as purchase, cart booking, round-trip booking, refund request, waitlist join, wishlist add/remove, flight creation, status update, city add, alias add, airport add, and agent association.
 
 ## 17. Round 3 Agent CRM
 

@@ -17,7 +17,7 @@
 
 - `routes/auth_routes.py`: registration, login, logout, and session setup.
 - `routes/public_routes.py`: home page, public flight search, and public flight status check.
-- `routes/customer_routes.py`: customer dashboard, purchase, cart, itinerary, cancellation, waitlist, and wishlist actions.
+- `routes/customer_routes.py`: customer dashboard, purchase, cart, round-trip confirmation, cancellation, waitlist, and wishlist actions.
 - `routes/agent_routes.py`: booking agent dashboard, commission view, CRM summary, and agent purchase.
 - `routes/staff_routes.py`: staff dashboard, passenger list, operator status update, admin actions, city analysis, city-pair analysis, audit log, and disruption assistant.
 - `routes/__init__.py`: marks route package.
@@ -29,7 +29,7 @@
 - `services/flight_service.py`: searches upcoming flights with sorting/filtering, seats-left, recommendation labels, and dynamic status from `flight_status_view`.
 - `services/ticket_service.py`: enforces ticket purchase rules, active-ticket capacity checks, customer tickets, and agent tickets.
 - `services/cart_service.py`: manages session cart items and cart booking validation.
-- `services/itinerary_service.py`: searches one-way, round-trip, and multi-city itinerary legs and creates booking orders.
+- `services/itinerary_service.py`: validates one-way and round-trip legs and creates booking orders.
 - `services/refund_service.py`: cancels eligible tickets, creates refund requests, and notifies waitlist customers.
 - `services/waitlist_service.py`: manages sold-out flight waitlist records.
 - `services/wishlist_service.py`: manages customer wishlist records.
@@ -45,11 +45,10 @@
 - `templates/index.html`: home page.
 - `templates/login.html`: login form.
 - `templates/register.html`: registration form for three roles.
-- `templates/flight_search.html`: flight search form, sorting/filtering controls, seats-left labels, cart, wishlist, and waitlist actions.
+- `templates/flight_search.html`: flight search form, one-way and round-trip search controls, seats-left labels, cart, wishlist, waitlist, and round-trip booking actions.
 - `templates/flight_status.html`: public status lookup form and result.
 - `templates/customer_dashboard.html`: customer tickets, search, purchase, cancellation, wishlist, waitlist, and recent searches.
 - `templates/customer_cart.html`: trip cart view, remove, confirm booking, and clear actions.
-- `templates/customer_itinerary.html`: one-way, round-trip, and multi-city itinerary search and booking.
 - `templates/agent_dashboard.html`: agent commission, CRM, sold tickets, search, and customer purchase action.
 - `templates/staff_dashboard.html`: staff flight table, passenger lookup, load factor/revenue dashboard, agent summary, route alerts, and operator status update.
 - `templates/staff_admin.html`: admin forms for city, alias, airport with timezone, airplane, flight with automatic UTC calculation, agent association, and city-airport-alias mapping.

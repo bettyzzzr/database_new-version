@@ -14,8 +14,8 @@
 | Customer cart view | `customer.cart` | `cart_service.get_cart_flights()` | `flight_status_view`, `airplane`, `ticket` |
 | Customer cart add/remove | `customer.cart_add`, `customer.cart_remove`, `customer.cart_clear` | `cart_service.add_to_cart()`, `cart_service.remove_from_cart()` | Flask session, `flight_status_view` |
 | Customer cart booking | `customer.cart_confirm` | `cart_service.confirm_cart_booking()`, `ticket_service.purchase_ticket()` | `ticket`, `flight_status_view`, `airplane`, `audit_log` |
-| Itinerary search | `customer.itinerary` | `itinerary_service.search_itinerary_options()` | `flight_status_view`, `airplane`, `ticket`, `airport`, `city`, `city_alias` |
-| Itinerary booking | `customer.itinerary_confirm` | `itinerary_service.confirm_itinerary_booking()` | `booking_order`, `booking_order_segment`, `ticket`, `flight_status_view`, `audit_log` |
+| Round-trip search | `public.flight_search` | `flight_service.search_upcoming_flights()`, `itinerary_service.build_itinerary_legs()` | `flight_status_view`, `airplane`, `ticket`, `airport`, `city`, `city_alias` |
+| Round-trip booking | `customer.round_trip_confirm` | `itinerary_service.confirm_itinerary_booking()` | `booking_order`, `booking_order_segment`, `ticket`, `flight_status_view`, `audit_log` |
 | Cancellation and refund | `customer.ticket_cancel` | `refund_service.cancel_ticket_for_refund()` | `ticket`, `refund`, `flight_status_view`, `waitlist`, `audit_log` |
 | Waitlist join | `customer.waitlist_join` | `waitlist_service.join_waitlist()` | `waitlist`, `flight_status_view`, `ticket`, `airplane`, `audit_log` |
 | Wishlist add/remove/list | `customer.wishlist_add`, `customer.wishlist_remove`, `customer.dashboard` | `wishlist_service.add_wishlist_item()`, `wishlist_service.remove_wishlist_item()`, `wishlist_service.get_wishlist_items()` | `wishlist`, `flight_status_view`, `audit_log` |
