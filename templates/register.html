@@ -57,7 +57,14 @@
                 <input name="last_name" value="{{ request.form.get('last_name', '') }}" data-required>
             </label>
             <label>Airline company
-                <input name="airline_name" value="{{ request.form.get('airline_name', '') }}" placeholder="BlueSky Airlines" data-required>
+                <select name="airline_name" data-required>
+                    <option value="">Choose an airline</option>
+                    {% for airline in airlines %}
+                    <option value="{{ airline.airline_name }}" {% if request.form.get('airline_name', '') == airline.airline_name %}selected{% endif %}>
+                        {{ airline.airline_name }}
+                    </option>
+                    {% endfor %}
+                </select>
             </label>
         </fieldset>
 
@@ -76,9 +83,9 @@
         roleSections.forEach((section) => {
             const isActive = section.dataset.roleSection === roleSelect.value;
             section.hidden = !isActive;
-            section.querySelectorAll("input").forEach((input) => {
-                input.disabled = !isActive;
-                input.required = isActive && input.hasAttribute("data-required");
+            section.querySelectorAll("input, select").forEach((field) => {
+                field.disabled = !isActive;
+                field.required = isActive && field.hasAttribute("data-required");
             });
         });
     }

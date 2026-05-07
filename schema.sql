@@ -87,6 +87,7 @@ CREATE TABLE airline_staff (
     airline_name VARCHAR(100) NOT NULL,
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     is_operator BOOLEAN NOT NULL DEFAULT FALSE,
+    can_delete BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (airline_name) REFERENCES airline(airline_name)
 );
 

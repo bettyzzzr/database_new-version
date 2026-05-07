@@ -1,7 +1,7 @@
 from pymysql.err import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from db import execute, fetch_one
+from db import execute, fetch_all, fetch_one
 
 
 def _require_values(*values):
@@ -66,6 +66,17 @@ def register_staff(email, username, password, first_name, last_name, airline_nam
         raise ValueError("Staff email/username exists or airline is invalid.") from exc
 
 
+def get_airlines():
+    """Return the standardized airline list for registration and admin forms."""
+    return fetch_all(
+        """
+        SELECT airline_name
+        FROM airline
+        ORDER BY airline_name
+        """
+    )
+
+
 def authenticate_user(role, identifier, password):
     """Verify login credentials and return the session-safe user record."""
     if role == "customer":
@@ -73,10 +84,21 @@ def authenticate_user(role, identifier, password):
     elif role == "agent":
         user = fetch_one("SELECT * FROM booking_agent WHERE email = %s", (identifier,))
     elif role == "staff":
-        user = fetch_one("SELECT * FROM airline_staff WHERE username = %s", (identifier,))
+        user = fetch_one(
+            """
+            SELECT *
+            FROM airline_staff
+            WHERE username = %s OR email = %s
+            """,
+            (identifier, identifier),
+        )
     else:
         return None
 
     if not user or not check_password_hash(user["password_hash"], password):
         return None
+    if role == "staff" and not (user["is_admin"] or user["is_operator"] or user.get("can_delete")):
+        raise ValueError(
+            "Staff account is pending permissions. Ask a staff member with both admin and operator access to grant access."
+        )
     return user

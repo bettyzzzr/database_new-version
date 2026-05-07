@@ -3,6 +3,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 from services.audit_service import log_action
 from services.auth_service import (
     authenticate_user,
+    get_airlines,
     register_agent,
     register_customer,
     register_staff,
@@ -48,7 +49,7 @@ def register():
         except ValueError as exc:
             flash(str(exc), "error")
 
-    return render_template("register.html")
+    return render_template("register.html", airlines=get_airlines())
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -57,7 +58,11 @@ def login():
         role = request.form.get("role", "")
         identifier = request.form.get("identifier", "")
         password = request.form.get("password", "")
-        user = authenticate_user(role, identifier, password)
+        try:
+            user = authenticate_user(role, identifier, password)
+        except ValueError as exc:
+            flash(str(exc), "error")
+            return render_template("login.html")
         if not user:
             flash("Invalid login credentials.", "error")
             return render_template("login.html")
@@ -76,6 +81,7 @@ def login():
             session["airline_name"] = user["airline_name"]
             session["is_admin"] = bool(user["is_admin"])
             session["is_operator"] = bool(user["is_operator"])
+            session["can_delete"] = bool(user.get("can_delete"))
             next_url = url_for("staff.dashboard")
 
         log_action(role, session["user_id"], "login", "session", session["user_id"], "")

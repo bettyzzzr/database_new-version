@@ -1,6 +1,6 @@
 from functools import wraps
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
 
 from services.analytics_service import (
     get_agent_performance_summary,
@@ -21,10 +21,15 @@ from services.staff_service import (
     add_airport,
     associate_agent_with_airline,
     create_flight,
+    get_available_airplanes,
     get_city_airport_alias_mapping,
+    get_airline_airplanes,
+    get_airline_staff_accounts,
+    get_city_names,
     get_passenger_list,
     get_staff_flights,
     get_timezones,
+    grant_staff_permissions,
     update_flight_status,
 )
 
@@ -50,6 +55,7 @@ def _staff_context():
         "airline_name": session["airline_name"],
         "is_admin": session.get("is_admin", False),
         "is_operator": session.get("is_operator", False),
+        "can_delete": session.get("can_delete", False),
     }
 
 
@@ -119,14 +125,13 @@ def admin():
                     request.form.get("airport_code", ""),
                     request.form.get("airport_name", ""),
                     request.form.get("city_name", ""),
-                    request.form.get("timezone_name", ""),
+                    request.form.get("timezone_offset", ""),
                 )
             elif action == "add_airplane":
                 add_airplane(staff, request.form.get("airplane_id", ""), request.form.get("seats", ""))
             elif action == "create_flight":
-                create_flight(
+                created_flight_num = create_flight(
                     staff,
-                    request.form.get("flight_num", ""),
                     request.form.get("departure_airport", ""),
                     request.form.get("departure_time", ""),
                     request.form.get("arrival_airport", ""),
@@ -134,8 +139,18 @@ def admin():
                     request.form.get("price", ""),
                     request.form.get("airplane_id", ""),
                 )
+                flash(f"Flight created as {created_flight_num}.", "success")
+                return redirect(url_for("staff.admin"))
             elif action == "associate_agent":
                 associate_agent_with_airline(staff, request.form.get("agent_email", ""))
+            elif action == "grant_permissions":
+                grant_staff_permissions(
+                    staff,
+                    request.form.get("staff_identifier", ""),
+                    bool(request.form.get("grant_admin")),
+                    bool(request.form.get("grant_operator")),
+                    bool(request.form.get("grant_delete")),
+                )
             else:
                 raise ValueError("Unknown admin action.")
             flash("Admin action completed.", "success")
@@ -145,7 +160,38 @@ def admin():
 
     mapping = get_city_airport_alias_mapping()
     timezones = get_timezones()
-    return render_template("staff_admin.html", mapping=mapping, timezones=timezones)
+    airplanes = get_airline_airplanes(session["airline_name"])
+    cities = get_city_names()
+    staff_accounts = get_airline_staff_accounts(session["airline_name"])
+    return render_template(
+        "staff_admin.html",
+        mapping=mapping,
+        timezones=timezones,
+        airplanes=airplanes,
+        cities=cities,
+        staff_accounts=staff_accounts,
+        can_grant_permissions=session.get("is_admin") and session.get("is_operator"),
+        flight_prefix_hint=session["airline_name"],
+    )
+
+
+@staff_bp.route("/admin/available-airplanes")
+@staff_required
+def available_airplanes():
+    if not session.get("is_admin"):
+        return jsonify({"message": "Admin staff permission is required.", "airplanes": []}), 403
+
+    try:
+        airplanes = get_available_airplanes(
+            _staff_context(),
+            request.args.get("departure_airport", ""),
+            request.args.get("departure_time", ""),
+            request.args.get("arrival_airport", ""),
+            request.args.get("arrival_time", ""),
+        )
+        return jsonify({"message": "", "airplanes": airplanes})
+    except ValueError as exc:
+        return jsonify({"message": str(exc), "airplanes": []}), 400
 
 
 @staff_bp.route("/city-analysis", methods=["GET", "POST"])

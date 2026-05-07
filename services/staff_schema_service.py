@@ -5,7 +5,7 @@ from db import get_db
 
 @lru_cache(maxsize=1)
 def ensure_staff_timezone_schema():
-    """Create missing airport timezone metadata for older databases."""
+    """Create missing airport timezone metadata and staff permission columns."""
     db = get_db()
     with db.cursor() as cursor:
         cursor.execute(
@@ -47,4 +47,12 @@ def ensure_staff_timezone_schema():
             """
         )
         cursor.execute("ALTER TABLE airport MODIFY timezone_name VARCHAR(64) NOT NULL")
+        cursor.execute("SHOW COLUMNS FROM airline_staff LIKE 'can_delete'")
+        if cursor.fetchone() is None:
+            cursor.execute(
+                """
+                ALTER TABLE airline_staff
+                ADD COLUMN can_delete BOOLEAN NOT NULL DEFAULT FALSE AFTER is_operator
+                """
+            )
     db.commit()

@@ -77,10 +77,10 @@ INSERT INTO customer (email, name, password_hash, passport_number, passport_expi
 INSERT INTO booking_agent (email, name, booking_agent_id, password_hash) VALUES
 ('agent@example.com', 'Demo Agent', 501, 'pbkdf2:sha256:600000$agentsalt$91e7cf1a2c71778e0b5a3fb5d70fc7fd0ae128fc976045f3dd42b94854618138');
 
-INSERT INTO airline_staff (username, email, password_hash, first_name, last_name, airline_name, is_admin, is_operator) VALUES
-('admin_blue', 'admin_blue@example.com', 'pbkdf2:sha256:600000$adminsalt$2823d26f83e838fe557e6c03352e212d01d00f773f558db620afec38cd313295', 'Ada', 'Admin', 'BlueSky Airlines', TRUE, FALSE),
-('operator_blue', 'operator_blue@example.com', 'pbkdf2:sha256:600000$operasalt$1657db469791d6443782a839f771efb245a1a54a15acd096ae4ce2a260e33661', 'Oscar', 'Operator', 'BlueSky Airlines', FALSE, TRUE),
-('staff_both', 'staff_both@example.com', 'pbkdf2:sha256:600000$staffsalt$f2f4ae6e6bcab02a9b91229cf92ccd4c7fac6a3c4e56cf86ce46797c018a3231', 'Sam', 'Staff', 'BlueSky Airlines', TRUE, TRUE);
+INSERT INTO airline_staff (username, email, password_hash, first_name, last_name, airline_name, is_admin, is_operator, can_delete) VALUES
+('admin_blue', 'admin_blue@example.com', 'pbkdf2:sha256:600000$adminsalt$2823d26f83e838fe557e6c03352e212d01d00f773f558db620afec38cd313295', 'Ada', 'Admin', 'BlueSky Airlines', TRUE, FALSE, FALSE),
+('operator_blue', 'operator_blue@example.com', 'pbkdf2:sha256:600000$operasalt$1657db469791d6443782a839f771efb245a1a54a15acd096ae4ce2a260e33661', 'Oscar', 'Operator', 'BlueSky Airlines', FALSE, TRUE, FALSE),
+('staff_both', 'staff_both@example.com', 'pbkdf2:sha256:600000$staffsalt$f2f4ae6e6bcab02a9b91229cf92ccd4c7fac6a3c4e56cf86ce46797c018a3231', 'Sam', 'Staff', 'BlueSky Airlines', TRUE, TRUE, TRUE);
 
 INSERT INTO booking_agent_work_for (email, airline_name) VALUES
 ('agent@example.com', 'BlueSky Airlines');
