@@ -22,13 +22,23 @@
 | Frequent searches | `public.flight_search`, `customer.dashboard` | `frequent_search_service.record_search()`, `frequent_search_service.get_recent_searches()` | `frequent_search`, `audit_log` |
 | Agent ticket list | `agent.dashboard` | `ticket_service.get_agent_tickets()` | `ticket`, `flight_status_view` |
 | Agent commission summary | `agent.dashboard` | `analytics_service.get_agent_commission_summary()` | `ticket` |
+| Agent CRM customer targeting | `agent.dashboard` | `analytics_service.get_agent_customer_crm()` | `ticket`, `customer` |
 | Agent purchase for customer | `agent.purchase` | `ticket_service.purchase_ticket_for_agent()` | `booking_agent_work_for`, `customer`, `ticket`, `flight_status_view`, `flight`, `airplane`, `audit_log` |
 | Staff airline flight list | `staff.dashboard` | `staff_service.get_staff_flights()` | `flight_status_view` |
 | Staff flight summary | `staff.dashboard` | `analytics_service.get_staff_flight_summary()` | `flight_status_view` |
+| Staff load factor and revenue dashboard | `staff.dashboard` | `analytics_service.get_flight_revenue_dashboard()` | `flight_status_view`, `airplane`, `ticket` |
+| Staff agent performance summary | `staff.dashboard` | `analytics_service.get_agent_performance_summary()` | `booking_agent_work_for`, `booking_agent`, `ticket` |
+| Staff route opportunity alerts | `staff.dashboard` | `analytics_service.get_route_opportunity_alerts()` | `flight_status_view`, `airplane`, `ticket` |
 | Passenger list | `staff.dashboard` | `staff_service.get_passenger_list()` | `ticket`, `customer` |
-| Add airport | `staff.admin` | `staff_service.add_airport()` | `city`, `airport`, `audit_log` |
+| Staff city market analysis | `staff.city_analysis` | `analytics_service.get_city_market_analysis()`, `location_service.resolve_location_to_airports()` | `flight_status_view`, `airplane`, `ticket`, `airport`, `city`, `city_alias` |
+| Staff city-pair market analysis | `staff.city_pair_analysis` | `analytics_service.get_city_pair_market_analysis()`, `location_service.resolve_location_to_airports()` | `flight_status_view`, `airplane`, `ticket`, `airport`, `city`, `city_alias` |
+| Staff disruption assistant | `staff.disruption` | `analytics_service.get_disruption_assistant()` | `flight_status_view`, `ticket`, `customer`, `airport`, `city` |
+| Staff audit log | `staff.audit_log` | `audit_service.get_recent_audit_logs()` | `audit_log` |
+| Add city | `staff.admin` | `staff_service.add_city()` | `city`, `audit_log` |
+| Add city alias | `staff.admin` | `staff_service.add_city_alias()` | `city`, `city_alias`, `audit_log` |
+| Add airport | `staff.admin` | `staff_service.add_airport()` | `city`, `airport`, `airport_timezone`, `audit_log` |
 | Add airplane | `staff.admin` | `staff_service.add_airplane()` | `airplane`, `audit_log` |
-| Create flight | `staff.admin` | `staff_service.create_flight()` | `flight`, `airplane`, `airport`, `audit_log` |
+| Create flight with automatic UTC times | `staff.admin` | `staff_service.create_flight()` | `flight`, `airplane`, `airport`, `airport_timezone`, `audit_log` |
 | Associate booking agent | `staff.admin` | `staff_service.associate_agent_with_airline()` | `booking_agent_work_for`, `booking_agent`, `airline`, `audit_log` |
 | Operator status update | `staff.status_update` | `staff_service.update_flight_status()` | `flight`, `audit_log` |
 
@@ -42,4 +52,14 @@
 
 Seats left is calculated as airplane capacity minus active tickets. Cancelled tickets do not consume seats.
 
-Round 2 intentionally does not use `SELECT ... FOR UPDATE` or row-level locking; concurrency-safe purchasing is reserved for Round 4.
+Round 2 and Round 3 intentionally do not use row-level locking; concurrency-safe purchasing is reserved for Round 4.
+
+## Business Prototype Explanation
+
+The bonus features turn the project from a basic reservation system into a commercial airline/OTA prototype:
+
+- Customers can compare and book realistic trips.
+- Staff can analyze city-level and route-level market performance.
+- City aliases are stored as structured data.
+- Audit logs provide operational accountability.
+- The disruption assistant uses multi-airport city logic to suggest realistic alternatives.

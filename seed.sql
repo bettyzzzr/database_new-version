@@ -16,18 +16,23 @@ SELECT city_id, '上海' FROM city WHERE city_name = 'Shanghai';
 INSERT INTO city_alias (city_id, alias_name)
 SELECT city_id, 'TYO' FROM city WHERE city_name = 'Tokyo';
 
-INSERT INTO airport (airport_code, airport_name, city_id)
-SELECT 'JFK', 'John F. Kennedy International Airport', city_id FROM city WHERE city_name = 'New York';
-INSERT INTO airport (airport_code, airport_name, city_id)
-SELECT 'LGA', 'LaGuardia Airport', city_id FROM city WHERE city_name = 'New York';
-INSERT INTO airport (airport_code, airport_name, city_id)
-SELECT 'PVG', 'Shanghai Pudong International Airport', city_id FROM city WHERE city_name = 'Shanghai';
-INSERT INTO airport (airport_code, airport_name, city_id)
-SELECT 'SHA', 'Shanghai Hongqiao International Airport', city_id FROM city WHERE city_name = 'Shanghai';
-INSERT INTO airport (airport_code, airport_name, city_id)
-SELECT 'HND', 'Tokyo Haneda Airport', city_id FROM city WHERE city_name = 'Tokyo';
-INSERT INTO airport (airport_code, airport_name, city_id)
-SELECT 'NRT', 'Narita International Airport', city_id FROM city WHERE city_name = 'Tokyo';
+INSERT INTO airport_timezone (timezone_name, utc_offset_minutes, display_name) VALUES
+('America/New_York', -300, 'New York UTC-05:00'),
+('Asia/Shanghai', 480, 'Shanghai UTC+08:00'),
+('Asia/Tokyo', 540, 'Tokyo UTC+09:00');
+
+INSERT INTO airport (airport_code, airport_name, city_id, timezone_name)
+SELECT 'JFK', 'John F. Kennedy International Airport', city_id, 'America/New_York' FROM city WHERE city_name = 'New York';
+INSERT INTO airport (airport_code, airport_name, city_id, timezone_name)
+SELECT 'LGA', 'LaGuardia Airport', city_id, 'America/New_York' FROM city WHERE city_name = 'New York';
+INSERT INTO airport (airport_code, airport_name, city_id, timezone_name)
+SELECT 'PVG', 'Shanghai Pudong International Airport', city_id, 'Asia/Shanghai' FROM city WHERE city_name = 'Shanghai';
+INSERT INTO airport (airport_code, airport_name, city_id, timezone_name)
+SELECT 'SHA', 'Shanghai Hongqiao International Airport', city_id, 'Asia/Shanghai' FROM city WHERE city_name = 'Shanghai';
+INSERT INTO airport (airport_code, airport_name, city_id, timezone_name)
+SELECT 'HND', 'Tokyo Haneda Airport', city_id, 'Asia/Tokyo' FROM city WHERE city_name = 'Tokyo';
+INSERT INTO airport (airport_code, airport_name, city_id, timezone_name)
+SELECT 'NRT', 'Narita International Airport', city_id, 'Asia/Tokyo' FROM city WHERE city_name = 'Tokyo';
 
 INSERT INTO airline (airline_name) VALUES
 ('BlueSky Airlines'),

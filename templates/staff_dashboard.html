@@ -4,6 +4,12 @@
 <section>
     <h2>Staff Dashboard</h2>
     <p>Airline: {{ session.airline_name }}</p>
+    <p>
+        <a href="{{ url_for('staff.city_analysis') }}">City Analysis</a>
+        <a href="{{ url_for('staff.city_pair_analysis') }}">City-Pair Analysis</a>
+        <a href="{{ url_for('staff.admin') }}">Admin Tools</a>
+        <a href="{{ url_for('staff.audit_log') }}">Audit Log</a>
+    </p>
     <table>
         <tr><th>Upcoming</th><td>{{ summary.upcoming_count or 0 }}</td></tr>
         <tr><th>In Progress</th><td>{{ summary.in_progress_count or 0 }}</td></tr>
@@ -19,7 +25,7 @@
         <thead>
             <tr>
                 <th>Flight</th><th>From</th><th>Departure</th><th>To</th><th>Arrival</th>
-                <th>Staff Status</th><th>Current Status</th><th>Passengers</th><th>Operator Update</th>
+                <th>Staff Status</th><th>Current Status</th><th>Passengers</th><th>Disruption</th><th>Operator Update</th>
             </tr>
         </thead>
         <tbody>
@@ -40,6 +46,13 @@
                     </form>
                 </td>
                 <td>
+                    {% if flight.current_status in ["delayed", "cancelled"] %}
+                    <a href="{{ url_for('staff.disruption', airline_name=flight.airline_name, flight_num=flight.flight_num) }}">Open</a>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>
                     <form method="post" action="{{ url_for('staff.status_update') }}">
                         <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
                         <select name="status">
@@ -54,6 +67,87 @@
             {% endfor %}
         </tbody>
     </table>
+</section>
+
+<section>
+    <h2>Load Factor / Revenue Dashboard</h2>
+    {% if load_dashboard %}
+    <table>
+        <thead>
+            <tr>
+                <th>Airline</th><th>Flight</th><th>Route</th><th>Status</th><th>Capacity</th>
+                <th>Active Tickets</th><th>Seats Left</th><th>Load Factor</th><th>Revenue</th><th>Business Signal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in load_dashboard %}
+            <tr>
+                <td>{{ row.airline_name }}</td>
+                <td>{{ row.flight_num }}</td>
+                <td>{{ row.route }}</td>
+                <td>{{ row.current_status|replace("_", " ")|title }}</td>
+                <td>{{ row.capacity }}</td>
+                <td>{{ row.active_tickets_sold }}</td>
+                <td>{{ row.seats_left }}</td>
+                <td>{{ "%.2f"|format(row.load_factor) }}%</td>
+                <td>${{ "%.2f"|format(row.revenue) }}</td>
+                <td>{{ row.business_signal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No flight revenue data yet.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>Agent Performance Summary</h2>
+    {% if agent_summary %}
+    <table>
+        <thead>
+            <tr>
+                <th>Agent Email</th><th>Tickets Sold</th><th>Revenue Generated</th>
+                <th>Commission</th><th>Last Purchase</th><th>Cancelled Tickets</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for agent in agent_summary %}
+            <tr>
+                <td>{{ agent.agent_email }}</td>
+                <td>{{ agent.tickets_sold }}</td>
+                <td>${{ "%.2f"|format(agent.revenue_generated) }}</td>
+                <td>${{ "%.2f"|format(agent.commission) }}</td>
+                <td>{{ agent.last_purchase_date or "" }}</td>
+                <td>{{ agent.cancelled_ticket_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No agent performance data yet.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>Route Opportunity Alerts</h2>
+    {% if alerts %}
+    <table>
+        <thead>
+            <tr><th>Route</th><th>Alert</th></tr>
+        </thead>
+        <tbody>
+            {% for alert in alerts %}
+            <tr>
+                <td>{{ alert.route }}</td>
+                <td>{{ alert.message }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No route alerts right now.</p>
+    {% endif %}
 </section>
 
 {% if passenger_flight_num %}

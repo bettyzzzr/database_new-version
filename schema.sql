@@ -11,15 +11,23 @@ CREATE TABLE city_alias (
     alias_id INT AUTO_INCREMENT PRIMARY KEY,
     city_id INT NOT NULL,
     alias_name VARCHAR(100) NOT NULL UNIQUE,
-    FOREIGN KEY (city_id) REFERENCES city(city_id)
+    FOREIGN KEY (city_id) REFERENCES city(city_id),
         ON DELETE CASCADE
+);
+
+CREATE TABLE airport_timezone (
+    timezone_name VARCHAR(64) PRIMARY KEY,
+    utc_offset_minutes INT NOT NULL,
+    display_name VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE airport (
     airport_code CHAR(3) PRIMARY KEY,
     airport_name VARCHAR(100) NOT NULL,
     city_id INT NOT NULL,
-    FOREIGN KEY (city_id) REFERENCES city(city_id)
+    timezone_name VARCHAR(64) NOT NULL,
+    FOREIGN KEY (city_id) REFERENCES city(city_id),
+    FOREIGN KEY (timezone_name) REFERENCES airport_timezone(timezone_name)
 );
 
 CREATE TABLE airline (

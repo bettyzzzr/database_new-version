@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section>
+    <h2>City-Pair Market Analysis</h2>
+    <form method="post">
+        <label>Origin city or alias
+            <input name="origin_city_input" placeholder="NYC, New York" value="{{ request.form.get('origin_city_input', '') }}" required>
+        </label>
+        <label>Destination city or alias
+            <input name="destination_city_input" placeholder="Shanghai, SH" value="{{ request.form.get('destination_city_input', '') }}" required>
+        </label>
+        <button type="submit">Analyze</button>
+    </form>
+</section>
+
+{% if analysis %}
+<section>
+    <h2>Summary</h2>
+    <p>Origin airports: {{ analysis.origin_airports|join(", ") }}</p>
+    <p>Destination airports: {{ analysis.destination_airports|join(", ") }}</p>
+    <table>
+        <tr><th>Total Flights</th><td>{{ analysis.summary.total_flights or 0 }}</td></tr>
+        <tr><th>Tickets Sold</th><td>{{ analysis.summary.tickets_sold or 0 }}</td></tr>
+        <tr><th>Revenue</th><td>${{ "%.2f"|format(analysis.summary.revenue or 0) }}</td></tr>
+        <tr><th>Average Load Factor</th><td>{{ "%.2f"|format(analysis.summary.average_load_factor or 0) }}%</td></tr>
+        <tr><th>Cheapest Airport Pair</th><td>{% if analysis.cheapest_pair %}{{ analysis.cheapest_pair.origin_airport }} -> {{ analysis.cheapest_pair.destination_airport }}{% endif %}</td></tr>
+        <tr><th>Most Popular Airport Pair</th><td>{% if analysis.popular_pair %}{{ analysis.popular_pair.origin_airport }} -> {{ analysis.popular_pair.destination_airport }}{% endif %}</td></tr>
+        <tr><th>Delay Rate</th><td>{{ "%.2f"|format(analysis.summary.delay_rate or 0) }}%</td></tr>
+    </table>
+</section>
+
+<section>
+    <h2>Airport-Pair Comparison</h2>
+    {% if analysis.pairs_table %}
+    <table>
+        <thead>
+            <tr>
+                <th>Origin Airport</th><th>Destination Airport</th><th>Flights</th><th>Tickets Sold</th>
+                <th>Revenue</th><th>Average Load Factor</th><th>Delay Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in analysis.pairs_table %}
+            <tr>
+                <td>{{ row.origin_airport }}</td>
+                <td>{{ row.destination_airport }}</td>
+                <td>{{ row.flights }}</td>
+                <td>{{ row.tickets_sold }}</td>
+                <td>${{ "%.2f"|format(row.revenue) }}</td>
+                <td>{{ "%.2f"|format(row.average_load_factor) }}%</td>
+                <td>{{ "%.2f"|format(row.delay_rate) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No city-pair comparison data.</p>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

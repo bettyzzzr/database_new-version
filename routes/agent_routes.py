@@ -2,7 +2,7 @@ from functools import wraps
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
-from services.analytics_service import get_agent_commission_summary
+from services.analytics_service import get_agent_commission_summary, get_agent_customer_crm
 from services.customer_schema_service import ensure_customer_feature_schema
 from services.flight_service import search_upcoming_flights
 from services.ticket_service import get_agent_tickets, purchase_ticket_for_agent
@@ -40,7 +40,14 @@ def dashboard():
 
     tickets = get_agent_tickets(session["user_id"])
     summary = get_agent_commission_summary(session["user_id"])
-    return render_template("agent_dashboard.html", tickets=tickets, flights=flights, summary=summary)
+    crm_customers = get_agent_customer_crm(session["user_id"])
+    return render_template(
+        "agent_dashboard.html",
+        tickets=tickets,
+        flights=flights,
+        summary=summary,
+        crm_customers=crm_customers,
+    )
 
 
 @agent_bp.route("/purchase", methods=["POST"])

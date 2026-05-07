@@ -21,7 +21,10 @@
                 <a href="{{ url_for('agent.dashboard') }}">Agent Dashboard</a>
             {% elif session.get('role') == 'staff' %}
                 <a href="{{ url_for('staff.dashboard') }}">Staff Dashboard</a>
+                <a href="{{ url_for('staff.city_analysis') }}">City Analysis</a>
+                <a href="{{ url_for('staff.city_pair_analysis') }}">City-Pair Analysis</a>
                 <a href="{{ url_for('staff.admin') }}">Staff Admin</a>
+                <a href="{{ url_for('staff.audit_log') }}">Audit Log</a>
             {% endif %}
             {% if session.get('role') %}
                 <span>{{ session.get('role') }}: {{ session.get('user_id') }}</span>

@@ -29,7 +29,7 @@ def cancel_ticket_for_refund(customer_email, ticket_id):
 
     refund_amount = (ticket["sold_price"] * Decimal("0.80")).quantize(Decimal("0.01"))
     db = get_db()
-    auto_assigned = None
+    waitlist_notified = None
     try:
         with db.cursor() as cursor:
             cursor.execute(
@@ -44,20 +44,19 @@ def cancel_ticket_for_refund(customer_email, ticket_id):
                 (ticket_id, refund_amount),
             )
             refund_id = cursor.lastrowid
-            auto_assigned = notify_first_waiting_customer(ticket["airline_name"], ticket["flight_num"], cursor)
+            waitlist_notified = notify_first_waiting_customer(ticket["airline_name"], ticket["flight_num"], cursor)
         db.commit()
     except Exception:
         db.rollback()
         raise
 
     log_action("customer", customer_email, "refund_request", "ticket", str(ticket_id), str(refund_amount))
-    if auto_assigned:
+    if waitlist_notified:
         log_action(
             "system",
-            "waitlist_auto_assign",
-            "waitlist_convert",
-            "ticket",
-            str(auto_assigned["ticket_id"]),
-            f"{ticket['airline_name']}:{ticket['flight_num']}:{auto_assigned['customer_email']}",
+            "waitlist_notify",
+            "waitlist",
+            str(waitlist_notified["waitlist_id"]),
+            f"{ticket['airline_name']}:{ticket['flight_num']}:{waitlist_notified['customer_email']}",
         )
     return refund_id, refund_amount

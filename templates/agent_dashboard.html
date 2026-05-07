@@ -11,6 +11,34 @@
 </section>
 
 <section>
+    <h2>Agent CRM</h2>
+    {% if crm_customers %}
+    <table>
+        <thead>
+            <tr>
+                <th>Customer Email</th><th>Tickets Bought</th><th>Total Revenue</th>
+                <th>Total Commission</th><th>Last Purchase</th><th>Label</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in crm_customers %}
+            <tr>
+                <td>{{ customer.customer_email }}</td>
+                <td>{{ customer.tickets_bought }}</td>
+                <td>${{ "%.2f"|format(customer.total_revenue) }}</td>
+                <td>${{ "%.2f"|format(customer.total_commission) }}</td>
+                <td>{{ customer.last_purchase_date }}</td>
+                <td>{{ customer.customer_label }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No CRM customer data yet.</p>
+    {% endif %}
+</section>
+
+<section>
     <h2>Search Flights for Customer</h2>
     <form method="post">
         <label>Origin

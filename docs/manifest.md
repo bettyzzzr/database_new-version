@@ -11,14 +11,15 @@
 - `seed.sql`: inserts demo cities, aliases, airports, airlines, airplanes, flights, users, authorizations, and tickets.
 - `migrations/register_fields.sql`: upgrades a Round 1 database for role-specific registration fields.
 - `migrations/round2_customer_features.sql`: upgrades a Round 1 database for Round 2 customer-facing tables.
+- `migrations/airport_timezones.sql`: adds airport timezone metadata for automatic UTC flight time calculation.
 
 ## Routes
 
 - `routes/auth_routes.py`: registration, login, logout, and session setup.
 - `routes/public_routes.py`: home page, public flight search, and public flight status check.
 - `routes/customer_routes.py`: customer dashboard, purchase, cart, itinerary, cancellation, waitlist, and wishlist actions.
-- `routes/agent_routes.py`: booking agent dashboard, commission view, and agent purchase.
-- `routes/staff_routes.py`: staff dashboard, passenger list, operator status update, and admin actions.
+- `routes/agent_routes.py`: booking agent dashboard, commission view, CRM summary, and agent purchase.
+- `routes/staff_routes.py`: staff dashboard, passenger list, operator status update, admin actions, city analysis, city-pair analysis, audit log, and disruption assistant.
 - `routes/__init__.py`: marks route package.
 
 ## Services
@@ -33,9 +34,9 @@
 - `services/waitlist_service.py`: manages sold-out flight waitlist records.
 - `services/wishlist_service.py`: manages customer wishlist records.
 - `services/frequent_search_service.py`: records and lists recent customer flight searches.
-- `services/staff_service.py`: enforces staff admin/operator rules and performs staff operations.
-- `services/analytics_service.py`: simple commission and staff flight summaries.
-- `services/audit_service.py`: inserts basic audit log rows.
+- `services/staff_service.py`: enforces staff admin/operator rules, performs staff operations, manages city/airport/alias admin data, and computes UTC flight times from airport timezones.
+- `services/analytics_service.py`: commission summaries, CRM, load factor dashboards, city and city-pair market analysis, route alerts, and disruption assistant data.
+- `services/audit_service.py`: inserts audit log rows and lists recent logs for staff.
 - `services/__init__.py`: marks service package.
 
 ## Templates and Static
@@ -49,9 +50,13 @@
 - `templates/customer_dashboard.html`: customer tickets, search, purchase, cancellation, wishlist, waitlist, and recent searches.
 - `templates/customer_cart.html`: trip cart view, remove, confirm booking, and clear actions.
 - `templates/customer_itinerary.html`: one-way, round-trip, and multi-city itinerary search and booking.
-- `templates/agent_dashboard.html`: agent commission, sold tickets, search, and customer purchase action.
-- `templates/staff_dashboard.html`: staff flight table, passenger lookup, and operator status update.
-- `templates/staff_admin.html`: admin forms for airport, airplane, flight, and agent association.
+- `templates/agent_dashboard.html`: agent commission, CRM, sold tickets, search, and customer purchase action.
+- `templates/staff_dashboard.html`: staff flight table, passenger lookup, load factor/revenue dashboard, agent summary, route alerts, and operator status update.
+- `templates/staff_admin.html`: admin forms for city, alias, airport with timezone, airplane, flight with automatic UTC calculation, agent association, and city-airport-alias mapping.
+- `templates/staff_city_analysis.html`: city or alias market analysis for staff airline flights.
+- `templates/staff_city_pair_analysis.html`: city-pair market analysis across multi-airport markets.
+- `templates/staff_audit_log.html`: recent audit log table.
+- `templates/staff_disruption.html`: disrupted flight passengers and alternative same-city-market flights.
 - `templates/error.html`: simple error page.
 - `static/style.css`: minimal shared styling.
 

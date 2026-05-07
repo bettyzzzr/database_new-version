@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section>
+    <h2>City / Alias Market Analysis</h2>
+    <form method="post">
+        <label>City or alias
+            <input name="city_input" placeholder="NYC, New York, Shanghai, SH" value="{{ request.form.get('city_input', '') }}" required>
+        </label>
+        <button type="submit">Analyze</button>
+    </form>
+</section>
+
+{% if analysis %}
+<section>
+    <h2>Summary</h2>
+    <p>Input: {{ analysis.city_input }}</p>
+    <p>Airports included: {{ analysis.airports|join(", ") }}</p>
+    <table>
+        <tr><th>Total Flights</th><td>{{ analysis.summary.total_flights or 0 }}</td></tr>
+        <tr><th>Tickets Sold</th><td>{{ analysis.summary.tickets_sold or 0 }}</td></tr>
+        <tr><th>Revenue</th><td>${{ "%.2f"|format(analysis.summary.revenue or 0) }}</td></tr>
+        <tr><th>Average Load Factor</th><td>{{ "%.2f"|format(analysis.summary.average_load_factor or 0) }}%</td></tr>
+        <tr><th>Most Popular Destination</th><td>{{ analysis.popular_destination.arrival_airport if analysis.popular_destination else "" }}</td></tr>
+        <tr><th>Delay Rate</th><td>{{ "%.2f"|format(analysis.summary.delay_rate or 0) }}%</td></tr>
+    </table>
+</section>
+
+<section>
+    <h2>Airport Comparison</h2>
+    {% if analysis.airports_table %}
+    <table>
+        <thead>
+            <tr>
+                <th>Airport</th><th>Flights</th><th>Tickets Sold</th><th>Revenue</th>
+                <th>Average Load Factor</th><th>Delay Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in analysis.airports_table %}
+            <tr>
+                <td>{{ row.airport }}</td>
+                <td>{{ row.flights }}</td>
+                <td>{{ row.tickets_sold }}</td>
+                <td>${{ "%.2f"|format(row.revenue) }}</td>
+                <td>{{ "%.2f"|format(row.average_load_factor) }}%</td>
+                <td>{{ "%.2f"|format(row.delay_rate) }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No airport comparison data.</p>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

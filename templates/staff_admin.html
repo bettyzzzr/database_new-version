@@ -7,12 +7,38 @@
 </section>
 
 <section>
+    <h3>Add City</h3>
+    <form method="post">
+        <input type="hidden" name="action" value="add_city">
+        <label>City name <input name="city_name" required></label>
+        <button type="submit">Add City</button>
+    </form>
+</section>
+
+<section>
+    <h3>Add City Alias</h3>
+    <form method="post">
+        <input type="hidden" name="action" value="add_alias">
+        <label>City name <input name="city_name" required></label>
+        <label>Alias <input name="alias_name" required></label>
+        <button type="submit">Add Alias</button>
+    </form>
+</section>
+
+<section>
     <h3>Add Airport</h3>
     <form method="post">
         <input type="hidden" name="action" value="add_airport">
         <label>Airport code <input name="airport_code" maxlength="3" required></label>
         <label>Airport name <input name="airport_name" required></label>
         <label>City name <input name="city_name" required></label>
+        <label>Timezone
+            <select name="timezone_name" required>
+                {% for timezone in timezones %}
+                <option value="{{ timezone.timezone_name }}">{{ timezone.display_name }}</option>
+                {% endfor %}
+            </select>
+        </label>
         <button type="submit">Add Airport</button>
     </form>
 </section>
@@ -33,11 +59,9 @@
         <input type="hidden" name="action" value="create_flight">
         <label>Flight number <input name="flight_num" required></label>
         <label>Departure airport <input name="departure_airport" maxlength="3" required></label>
-        <label>Departure display time <input type="datetime-local" name="departure_time" required></label>
-        <label>Departure UTC time <input type="datetime-local" name="departure_time_utc" required></label>
+        <label>Departure local display time <input type="datetime-local" name="departure_time" required></label>
         <label>Arrival airport <input name="arrival_airport" maxlength="3" required></label>
-        <label>Arrival display time <input type="datetime-local" name="arrival_time" required></label>
-        <label>Arrival UTC time <input type="datetime-local" name="arrival_time_utc" required></label>
+        <label>Arrival local display time <input type="datetime-local" name="arrival_time" required></label>
         <label>Price <input type="number" step="0.01" name="price" required></label>
         <label>Airplane id <input type="number" name="airplane_id" required></label>
         <button type="submit">Create Flight</button>
@@ -51,5 +75,29 @@
         <label>Agent email <input type="email" name="agent_email" required></label>
         <button type="submit">Associate With My Airline</button>
     </form>
+</section>
+
+<section>
+    <h3>City-Airport-Alias Mapping</h3>
+    {% if mapping %}
+    <table>
+        <thead>
+            <tr><th>City</th><th>Airport</th><th>Airport Name</th><th>Timezone</th><th>Aliases</th></tr>
+        </thead>
+        <tbody>
+            {% for row in mapping %}
+            <tr>
+                <td>{{ row.city_name }}</td>
+                <td>{{ row.airport_code or "" }}</td>
+                <td>{{ row.airport_name or "" }}</td>
+                <td>{{ row.timezone_name or "" }}</td>
+                <td>{{ row.aliases }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No city mapping data yet.</p>
+    {% endif %}
 </section>
 {% endblock %}

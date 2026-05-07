@@ -2,14 +2,29 @@ from functools import wraps
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
-from services.analytics_service import get_staff_flight_summary
+from services.analytics_service import (
+    get_agent_performance_summary,
+    get_city_market_analysis,
+    get_city_pair_market_analysis,
+    get_disruption_assistant,
+    get_flight_revenue_dashboard,
+    get_route_opportunity_alerts,
+    get_staff_flight_summary,
+)
+from services.audit_service import get_recent_audit_logs
+from services.customer_schema_service import ensure_customer_feature_schema
+from services.staff_schema_service import ensure_staff_timezone_schema
 from services.staff_service import (
+    add_city,
+    add_city_alias,
     add_airplane,
     add_airport,
     associate_agent_with_airline,
     create_flight,
+    get_city_airport_alias_mapping,
     get_passenger_list,
     get_staff_flights,
+    get_timezones,
     update_flight_status,
 )
 
@@ -22,6 +37,8 @@ def staff_required(view):
         if session.get("role") != "staff":
             flash("Airline staff login is required.", "error")
             return redirect(url_for("auth.login"))
+        ensure_customer_feature_schema()
+        ensure_staff_timezone_schema()
         return view(*args, **kwargs)
 
     return wrapped
@@ -47,10 +64,16 @@ def dashboard():
 
     flights = get_staff_flights(session["airline_name"])
     summary = get_staff_flight_summary(session["airline_name"])
+    load_dashboard = get_flight_revenue_dashboard(session["airline_name"])
+    agent_summary = get_agent_performance_summary(session["airline_name"])
+    alerts = get_route_opportunity_alerts(session["airline_name"])
     return render_template(
         "staff_dashboard.html",
         flights=flights,
         summary=summary,
+        load_dashboard=load_dashboard,
+        agent_summary=agent_summary,
+        alerts=alerts,
         passengers=passengers,
         passenger_flight_num=passenger_flight_num,
     )
@@ -74,16 +97,29 @@ def status_update():
 @staff_bp.route("/admin", methods=["GET", "POST"])
 @staff_required
 def admin():
+    if not session.get("is_admin"):
+        flash("Admin staff permission is required.", "error")
+        return redirect(url_for("staff.dashboard"))
+
     if request.method == "POST":
         action = request.form.get("action", "")
         staff = _staff_context()
         try:
-            if action == "add_airport":
+            if action == "add_city":
+                add_city(staff, request.form.get("city_name", ""))
+            elif action == "add_alias":
+                add_city_alias(
+                    staff,
+                    request.form.get("city_name", ""),
+                    request.form.get("alias_name", ""),
+                )
+            elif action == "add_airport":
                 add_airport(
                     staff,
                     request.form.get("airport_code", ""),
                     request.form.get("airport_name", ""),
                     request.form.get("city_name", ""),
+                    request.form.get("timezone_name", ""),
                 )
             elif action == "add_airplane":
                 add_airplane(staff, request.form.get("airplane_id", ""), request.form.get("seats", ""))
@@ -93,10 +129,8 @@ def admin():
                     request.form.get("flight_num", ""),
                     request.form.get("departure_airport", ""),
                     request.form.get("departure_time", ""),
-                    request.form.get("departure_time_utc", ""),
                     request.form.get("arrival_airport", ""),
                     request.form.get("arrival_time", ""),
-                    request.form.get("arrival_time_utc", ""),
                     request.form.get("price", ""),
                     request.form.get("airplane_id", ""),
                 )
@@ -109,4 +143,59 @@ def admin():
             flash(str(exc), "error")
         return redirect(url_for("staff.admin"))
 
-    return render_template("staff_admin.html")
+    mapping = get_city_airport_alias_mapping()
+    timezones = get_timezones()
+    return render_template("staff_admin.html", mapping=mapping, timezones=timezones)
+
+
+@staff_bp.route("/city-analysis", methods=["GET", "POST"])
+@staff_required
+def city_analysis():
+    analysis = None
+    if request.method == "POST":
+        try:
+            analysis = get_city_market_analysis(
+                session["airline_name"],
+                request.form.get("city_input", ""),
+            )
+            if not analysis["airports"]:
+                flash("City or alias was not found.", "error")
+        except ValueError as exc:
+            flash(str(exc), "error")
+    return render_template("staff_city_analysis.html", analysis=analysis)
+
+
+@staff_bp.route("/city-pair-analysis", methods=["GET", "POST"])
+@staff_required
+def city_pair_analysis():
+    analysis = None
+    if request.method == "POST":
+        analysis = get_city_pair_market_analysis(
+            session["airline_name"],
+            request.form.get("origin_city_input", ""),
+            request.form.get("destination_city_input", ""),
+        )
+        if not analysis["origin_airports"] or not analysis["destination_airports"]:
+            flash("Origin or destination city/alias was not found.", "error")
+    return render_template("staff_city_pair_analysis.html", analysis=analysis)
+
+
+@staff_bp.route("/audit-log")
+@staff_required
+def audit_log():
+    logs = get_recent_audit_logs()
+    return render_template("staff_audit_log.html", logs=logs)
+
+
+@staff_bp.route("/disruption/<path:airline_name>/<flight_num>")
+@staff_required
+def disruption(airline_name, flight_num):
+    if airline_name != session["airline_name"]:
+        flash("You can only view disruptions for your airline.", "error")
+        return redirect(url_for("staff.dashboard"))
+    try:
+        assistant = get_disruption_assistant(airline_name, flight_num)
+    except ValueError as exc:
+        flash(str(exc), "error")
+        return redirect(url_for("staff.dashboard"))
+    return render_template("staff_disruption.html", assistant=assistant)

@@ -48,10 +48,10 @@ def join_waitlist(customer_email, airline_name, flight_num):
 
 
 def notify_first_waiting_customer(airline_name, flight_num, cursor=None):
-    """Auto-book the earliest waiting customer when a seat is released."""
+    """Mark the earliest waiting customer as notified when a seat is released."""
     ensure_customer_feature_schema()
 
-    def _assign_next_waitlisted_customer(active_cursor):
+    def _notify_next_waitlisted_customer(active_cursor):
         active_cursor.execute(
             """
             SELECT waitlist_id, customer_email
@@ -61,7 +61,6 @@ def notify_first_waiting_customer(airline_name, flight_num, cursor=None):
               AND status = 'waiting'
             ORDER BY request_time ASC, waitlist_id ASC
             LIMIT 1
-            FOR UPDATE
             """,
             (airline_name, flight_num),
         )
@@ -71,48 +70,8 @@ def notify_first_waiting_customer(airline_name, flight_num, cursor=None):
 
         active_cursor.execute(
             """
-            SELECT f.airline_name, f.flight_num, f.price, f.current_status
-            FROM flight_status_view f
-            WHERE f.airline_name = %s AND f.flight_num = %s
-            """,
-            (airline_name, flight_num),
-        )
-        flight = active_cursor.fetchone()
-        if not flight or flight["current_status"] != "upcoming":
-            return None
-
-        active_cursor.execute(
-            """
-            SELECT a.seats, COUNT(t.ticket_id) AS sold
-            FROM flight f
-            JOIN airplane a
-              ON f.airline_name = a.airline_name AND f.airplane_id = a.airplane_id
-            LEFT JOIN ticket t
-              ON f.airline_name = t.airline_name
-             AND f.flight_num = t.flight_num
-             AND t.ticket_status = 'active'
-            WHERE f.airline_name = %s AND f.flight_num = %s
-            GROUP BY a.seats
-            """,
-            (airline_name, flight_num),
-        )
-        capacity = active_cursor.fetchone()
-        if not capacity or capacity["sold"] >= capacity["seats"]:
-            return None
-
-        active_cursor.execute(
-            """
-            INSERT INTO ticket
-                (airline_name, flight_num, customer_email, booking_agent_email, sold_price)
-            VALUES (%s, %s, %s, NULL, %s)
-            """,
-            (flight["airline_name"], flight["flight_num"], next_customer["customer_email"], flight["price"]),
-        )
-        ticket_id = active_cursor.lastrowid
-        active_cursor.execute(
-            """
             UPDATE waitlist
-            SET status = 'converted'
+            SET status = 'notified'
             WHERE waitlist_id = %s
             """,
             (next_customer["waitlist_id"],),
@@ -120,31 +79,29 @@ def notify_first_waiting_customer(airline_name, flight_num, cursor=None):
         return {
             "waitlist_id": next_customer["waitlist_id"],
             "customer_email": next_customer["customer_email"],
-            "ticket_id": ticket_id,
         }
 
     if cursor is not None:
-        return _assign_next_waitlisted_customer(cursor)
+        return _notify_next_waitlisted_customer(cursor)
 
     db = get_db()
     try:
         with db.cursor() as owned_cursor:
-            assigned = _assign_next_waitlisted_customer(owned_cursor)
+            notified = _notify_next_waitlisted_customer(owned_cursor)
         db.commit()
     except Exception:
         db.rollback()
         raise
 
-    if assigned:
+    if notified:
         log_action(
             "system",
-            "waitlist_auto_assign",
-            "waitlist_convert",
-            "ticket",
-            str(assigned["ticket_id"]),
-            f"{airline_name}:{flight_num}:{assigned['customer_email']}",
+            "waitlist_notify",
+            "waitlist",
+            str(notified["waitlist_id"]),
+            f"{airline_name}:{flight_num}:{notified['customer_email']}",
         )
-    return assigned
+    return notified
 
 
 def get_customer_waitlist(customer_email):
