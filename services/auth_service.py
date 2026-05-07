@@ -1,7 +1,7 @@
 from pymysql.err import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from db import execute, fetch_all, fetch_one
+from db import execute, execute_affected, fetch_all, fetch_one
 
 
 def _require_values(*values):
@@ -24,6 +24,22 @@ def register_customer(email, name, password, passport_number, passport_expiratio
         )
     except IntegrityError as exc:
         raise ValueError("A customer with this email or passport already exists.") from exc
+
+
+def reset_customer_password(email, passport_number, new_password):
+    """Reset a customer password after matching the stored passport number."""
+    _require_values(email, passport_number, new_password)
+    password_hash = generate_password_hash(new_password)
+    affected = execute_affected(
+        """
+        UPDATE customer
+        SET password_hash = %s
+        WHERE email = %s AND passport_number = %s
+        """,
+        (password_hash, email, passport_number),
+    )
+    if affected == 0:
+        raise ValueError("Customer email and passport number did not match.")
 
 
 def _next_booking_agent_id():

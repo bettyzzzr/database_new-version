@@ -10,7 +10,7 @@ from services.analytics_service import (
 )
 from services.customer_schema_service import ensure_customer_feature_schema
 from services.flight_service import search_upcoming_flights
-from services.ticket_service import get_agent_tickets, purchase_ticket_for_agent
+from services.ticket_service import get_agent_tickets, purchase_tickets_for_agent
 
 agent_bp = Blueprint("agent", __name__, url_prefix="/agent")
 
@@ -63,13 +63,13 @@ def dashboard():
 @agent_required
 def purchase():
     try:
-        purchase_ticket_for_agent(
+        ticket_ids = purchase_tickets_for_agent(
             session["user_id"],
             request.form.get("customer_email", ""),
             request.form.get("airline_name", ""),
             request.form.get("flight_num", ""),
         )
-        flash("Agent ticket purchase completed.", "success")
+        flash(f"Agent ticket purchase completed. Ticket ids: {', '.join(map(str, ticket_ids))}.", "success")
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(url_for("agent.dashboard"))

@@ -7,6 +7,7 @@ from services.auth_service import (
     register_agent,
     register_customer,
     register_staff,
+    reset_customer_password,
 )
 
 auth_bp = Blueprint("auth", __name__)
@@ -89,6 +90,35 @@ def login():
         return redirect(next_url)
 
     return render_template("login.html")
+
+
+@auth_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+        try:
+            if new_password != confirm_password:
+                raise ValueError("New password and confirmation do not match.")
+            reset_customer_password(
+                request.form.get("email", ""),
+                request.form.get("passport_number", ""),
+                new_password,
+            )
+            log_action(
+                "customer",
+                request.form.get("email", ""),
+                "password_reset",
+                "customer",
+                request.form.get("email", ""),
+                "",
+            )
+            flash("Password reset successful. Please log in with your new password.", "success")
+            return redirect(url_for("auth.login"))
+        except ValueError as exc:
+            flash(str(exc), "error")
+
+    return render_template("forgot_password.html")
 
 
 @auth_bp.route("/logout")

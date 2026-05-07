@@ -99,7 +99,7 @@
         <thead>
             <tr>
                 <th>Airline</th><th>Flight</th><th>From</th><th>Departure</th>
-                <th>To</th><th>Arrival</th><th>Price</th><th>Status</th><th>Customer</th><th>Action</th>
+                <th>To</th><th>Arrival</th><th>Price</th><th>Status</th><th>Customers</th><th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -117,7 +117,7 @@
                     <form method="post" action="{{ url_for('agent.purchase') }}">
                         <input type="hidden" name="airline_name" value="{{ flight.airline_name }}">
                         <input type="hidden" name="flight_num" value="{{ flight.flight_num }}">
-                        <input type="email" name="customer_email" placeholder="alice@example.com" required>
+                        <input type="email" name="customer_email" placeholder="alice@example.com, bob@example.com" multiple required>
                         <button type="submit">Purchase</button>
                     </form>
                 </td>
@@ -129,7 +129,7 @@
 {% endif %}
 
 <section>
-    <h2>Tickets Sold By This Agent</h2>
+    <h2>Active Tickets Sold By This Agent</h2>
     {% if tickets %}
     <table>
         <thead>
