@@ -1,6 +1,6 @@
 from flask import Blueprint, flash, render_template, request, session
 
-from services.flight_service import get_flight_status, search_upcoming_flights
+from services.flight_service import search_flight_statuses, search_upcoming_flights
 from services.frequent_search_service import record_search
 
 public_bp = Blueprint("public", __name__)
@@ -41,12 +41,17 @@ def flight_search():
 
 @public_bp.route("/flights/status", methods=["GET", "POST"])
 def flight_status():
-    flight = None
+    flights = []
+    searched = False
     if request.method == "POST":
-        flight = get_flight_status(
-            request.form.get("airline_name", ""),
-            request.form.get("flight_num", ""),
-        )
-        if not flight:
-            flash("Flight was not found.", "error")
-    return render_template("flight_status.html", flight=flight)
+        searched = True
+        try:
+            flights = search_flight_statuses(
+                request.form.get("airline_name", ""),
+                request.form.get("flight_num", ""),
+            )
+            if not flights:
+                flash("Flight was not found.", "error")
+        except ValueError as exc:
+            flash(str(exc), "error")
+    return render_template("flight_status.html", flights=flights, searched=searched)

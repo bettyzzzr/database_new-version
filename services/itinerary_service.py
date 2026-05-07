@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import date
 
 from db import get_db
 from services.audit_service import log_action
@@ -6,43 +7,64 @@ from services.flight_service import search_upcoming_flights
 from services.ticket_service import insert_direct_ticket, validate_customer_purchase
 
 VALID_BOOKING_TYPES = {"one_way", "round_trip", "multi_city"}
+MAX_MULTI_CITY_LEGS = 6
 
 
 def _is_complete_leg(leg):
     return bool(leg.get("origin") and leg.get("destination") and leg.get("date"))
 
 
-def build_itinerary_legs(booking_type, raw_legs):
-    """Validate and normalize itinerary leg inputs."""
+def _parse_iso_date(value, message):
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(message) from exc
+
+
+def itinerary_leg_count(booking_type, requested_count=None):
+    """Return the allowed number of itinerary legs for the selected booking type."""
     if booking_type not in VALID_BOOKING_TYPES:
         raise ValueError("Choose a valid booking type.")
 
     if booking_type == "one_way":
-        required = raw_legs[:1]
-    elif booking_type == "round_trip":
-        required = raw_legs[:2]
-    else:
-        required = raw_legs[:2]
-        if any(raw_legs[2].values()):
-            required.append(raw_legs[2])
+        return 1
+    if booking_type == "round_trip":
+        return 2
+
+    try:
+        count = int(requested_count or 3)
+    except (TypeError, ValueError):
+        count = 3
+    return max(2, min(count, MAX_MULTI_CITY_LEGS))
+
+
+def build_itinerary_legs(booking_type, raw_legs, requested_count=None):
+    """Validate and normalize itinerary leg inputs."""
+    required = raw_legs[:itinerary_leg_count(booking_type, requested_count)]
 
     if not all(_is_complete_leg(leg) for leg in required):
         raise ValueError("Please fill every required itinerary leg.")
 
-    return [
+    legs = [
         {
             "index": index,
-            "origin": leg["origin"],
-            "destination": leg["destination"],
+            "origin": leg["origin"].strip(),
+            "destination": leg["destination"].strip(),
             "date": leg["date"],
         }
         for index, leg in enumerate(required, start=1)
     ]
+    if booking_type == "round_trip":
+        outbound_date = _parse_iso_date(legs[0]["date"], "Enter a valid date for leg 1.")
+        return_date = _parse_iso_date(legs[1]["date"], "Enter a valid date for leg 2.")
+        if return_date < outbound_date:
+            raise ValueError("Round-trip leg 2 date cannot be earlier than leg 1.")
+    return legs
 
 
-def search_itinerary_options(booking_type, raw_legs):
+def search_itinerary_options(booking_type, raw_legs, requested_count=None):
     """Search available flight options for each itinerary leg."""
-    legs = build_itinerary_legs(booking_type, raw_legs)
+    legs = build_itinerary_legs(booking_type, raw_legs, requested_count)
     for leg in legs:
         leg["flights"] = search_upcoming_flights(
             leg["origin"],

@@ -1,11 +1,13 @@
 from db import execute, fetch_all
 from services.audit_service import log_action
+from services.customer_schema_service import ensure_customer_feature_schema
 
 
 def record_search(customer_email, origin_input, destination_input, search_date):
     """Record a logged-in customer's flight search inputs."""
     if not customer_email or not origin_input or not destination_input:
         return None
+    ensure_customer_feature_schema()
 
     search_id = execute(
         """
@@ -21,6 +23,7 @@ def record_search(customer_email, origin_input, destination_input, search_date):
 
 def get_recent_searches(customer_email, limit=5):
     """Return a customer's most recent saved searches."""
+    ensure_customer_feature_schema()
     return fetch_all(
         """
         SELECT *

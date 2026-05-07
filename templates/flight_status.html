@@ -5,27 +5,40 @@
     <h2>Check Flight Status</h2>
     <form method="post">
         <label>Airline name
-            <input name="airline_name" placeholder="BlueSky Airlines" required>
+            <input name="airline_name" placeholder="BlueSky Airlines" value="{{ request.form.get('airline_name', '') }}">
         </label>
         <label>Flight number
-            <input name="flight_num" placeholder="BS101" required>
+            <input name="flight_num" placeholder="BS101" value="{{ request.form.get('flight_num', '') }}">
         </label>
         <button type="submit">Check</button>
     </form>
 </section>
 
-{% if flight %}
+{% if flights %}
 <section>
-    <h2>Status Result</h2>
+    <h2>Status Results</h2>
     <table>
-        <tr><th>Airline</th><td>{{ flight.airline_name }}</td></tr>
-        <tr><th>Flight</th><td>{{ flight.flight_num }}</td></tr>
-        <tr><th>Route</th><td>{{ flight.departure_airport }} to {{ flight.arrival_airport }}</td></tr>
-        <tr><th>Departure</th><td>{{ flight.departure_time }}</td></tr>
-        <tr><th>Arrival</th><td>{{ flight.arrival_time }}</td></tr>
-        <tr><th>Staff Status</th><td>{{ flight.status|replace("_", " ")|title }}</td></tr>
-        <tr><th>Current Status</th><td>{{ flight.current_status|replace("_", " ")|title }}</td></tr>
+        <thead>
+            <tr>
+                <th>Airline</th><th>Flight</th><th>Route</th><th>Departure</th>
+                <th>Arrival</th><th>Current Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for flight in flights %}
+            <tr>
+                <td>{{ flight.airline_name }}</td>
+                <td>{{ flight.flight_num }}</td>
+                <td>{{ flight.departure_airport }} to {{ flight.arrival_airport }}</td>
+                <td>{{ flight.departure_time }}</td>
+                <td>{{ flight.arrival_time }}</td>
+                <td>{{ flight.current_status|replace("_", " ")|title }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </section>
+{% elif searched %}
+<p>No matching flights.</p>
 {% endif %}
 {% endblock %}

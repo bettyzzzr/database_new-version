@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+from functools import lru_cache
 
 from db import fetch_all, fetch_one
 from services.location_service import resolve_location_to_airports
@@ -17,18 +18,48 @@ def _placeholders(values):
     return ", ".join(["%s"] * len(values))
 
 
+@lru_cache(maxsize=1)
+def _ticket_has_status_column():
+    return bool(fetch_one("SHOW COLUMNS FROM ticket LIKE 'ticket_status'"))
+
+
+def _clean_text(value):
+    return (value or "").strip()
+
+
+def _has_search_filters(
+    origin_input,
+    destination_input,
+    departure_date,
+    airline,
+    max_price,
+    available_only,
+):
+    return any(
+        [
+            origin_input,
+            destination_input,
+            departure_date,
+            airline,
+            str(max_price).strip() if max_price is not None else "",
+            available_only,
+        ]
+    )
+
+
 def _flight_capacity_join():
+    status_filter = "WHERE ticket_status = 'active'" if _ticket_has_status_column() else ""
     return """
         JOIN airplane a
           ON f.airline_name = a.airline_name AND f.airplane_id = a.airplane_id
         LEFT JOIN (
             SELECT airline_name, flight_num, COUNT(*) AS active_tickets
             FROM ticket
-            WHERE ticket_status = 'active'
+            {status_filter}
             GROUP BY airline_name, flight_num
         ) tc
           ON f.airline_name = tc.airline_name AND f.flight_num = tc.flight_num
-    """
+    """.format(status_filter=status_filter)
 
 
 def _flight_select():
@@ -65,7 +96,7 @@ def _add_recommendation_labels(flights):
 
 
 def _normalize_max_price(max_price):
-    if not max_price:
+    if max_price is None or str(max_price).strip() == "":
         return None
     try:
         value = Decimal(str(max_price))
@@ -86,27 +117,46 @@ def search_upcoming_flights(
     sort_by="departure_early",
 ):
     """Search upcoming flights using resolved multi-airport city inputs."""
-    origin_airports = resolve_location_to_airports(origin_input)
-    destination_airports = resolve_location_to_airports(destination_input)
-    if not origin_airports or not destination_airports:
+    origin_input = _clean_text(origin_input)
+    destination_input = _clean_text(destination_input)
+    airline = _clean_text(airline)
+    if not _has_search_filters(
+        origin_input,
+        destination_input,
+        departure_date,
+        airline,
+        max_price,
+        available_only,
+    ):
+        raise ValueError("Enter at least one search field before searching.")
+
+    origin_airports = resolve_location_to_airports(origin_input) if origin_input else []
+    destination_airports = resolve_location_to_airports(destination_input) if destination_input else []
+    if origin_input and not origin_airports:
+        return []
+    if destination_input and not destination_airports:
         return []
 
     max_price = _normalize_max_price(max_price)
-    params = origin_airports + destination_airports
+    params = []
     sql = f"""
         {_flight_select()}
         {_flight_capacity_join()}
         WHERE current_status = 'upcoming'
-          AND departure_airport IN ({_placeholders(origin_airports)})
-          AND arrival_airport IN ({_placeholders(destination_airports)})
     """
+    if origin_airports:
+        sql += f" AND departure_airport IN ({_placeholders(origin_airports)})"
+        params.extend(origin_airports)
+    if destination_airports:
+        sql += f" AND arrival_airport IN ({_placeholders(destination_airports)})"
+        params.extend(destination_airports)
     if departure_date:
         sql += " AND DATE(departure_time) = %s"
         params.append(departure_date)
     if airline:
         sql += " AND f.airline_name = %s"
         params.append(airline)
-    if max_price:
+    if max_price is not None:
         sql += " AND f.price <= %s"
         params.append(max_price)
     if available_only:
@@ -117,23 +167,35 @@ def search_upcoming_flights(
     return _add_recommendation_labels(fetch_all(sql, params))
 
 
+def search_flight_statuses(airline_name="", flight_num=""):
+    """Search flight statuses by airline, flight number, or both."""
+    airline_name = _clean_text(airline_name)
+    flight_num = _clean_text(flight_num)
+    if not airline_name and not flight_num:
+        raise ValueError("Enter at least one search field before checking flight status.")
+
+    params = []
+    sql = f"""
+        {_flight_select()}
+        {_flight_capacity_join()}
+        WHERE 1 = 1
+    """
+    if airline_name:
+        sql += " AND LOWER(f.airline_name) = LOWER(%s)"
+        params.append(airline_name)
+    if flight_num:
+        sql += " AND LOWER(f.flight_num) = LOWER(%s)"
+        params.append(flight_num)
+    sql += " ORDER BY f.departure_time ASC, f.airline_name ASC, f.flight_num ASC"
+    return fetch_all(sql, params)
+
+
 def get_flight_status(airline_name, flight_num):
     """Return one flight with dynamic current_status from the SQL view."""
     return fetch_one(
-        """
-        SELECT f.*,
-               TIMESTAMPDIFF(MINUTE, f.departure_time, f.arrival_time) AS duration_minutes,
-               a.seats - COALESCE(tc.active_tickets, 0) AS seats_left
-        FROM flight_status_view f
-        JOIN airplane a
-          ON f.airline_name = a.airline_name AND f.airplane_id = a.airplane_id
-        LEFT JOIN (
-            SELECT airline_name, flight_num, COUNT(*) AS active_tickets
-            FROM ticket
-            WHERE ticket_status = 'active'
-            GROUP BY airline_name, flight_num
-        ) tc
-          ON f.airline_name = tc.airline_name AND f.flight_num = tc.flight_num
+        f"""
+        {_flight_select()}
+        {_flight_capacity_join()}
         WHERE f.airline_name = %s AND f.flight_num = %s
         """,
         (airline_name, flight_num),

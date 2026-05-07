@@ -2,11 +2,13 @@ from decimal import Decimal
 
 from db import fetch_one, get_db
 from services.audit_service import log_action
+from services.customer_schema_service import ensure_customer_feature_schema
 from services.waitlist_service import notify_first_waiting_customer
 
 
 def cancel_ticket_for_refund(customer_email, ticket_id):
     """Cancel an eligible customer ticket and create an 80 percent refund request."""
+    ensure_customer_feature_schema()
     ticket = fetch_one(
         """
         SELECT t.*, f.departure_time_utc,
@@ -27,6 +29,7 @@ def cancel_ticket_for_refund(customer_email, ticket_id):
 
     refund_amount = (ticket["sold_price"] * Decimal("0.80")).quantize(Decimal("0.01"))
     db = get_db()
+    auto_assigned = None
     try:
         with db.cursor() as cursor:
             cursor.execute(
@@ -41,11 +44,20 @@ def cancel_ticket_for_refund(customer_email, ticket_id):
                 (ticket_id, refund_amount),
             )
             refund_id = cursor.lastrowid
-            notify_first_waiting_customer(ticket["airline_name"], ticket["flight_num"], cursor)
+            auto_assigned = notify_first_waiting_customer(ticket["airline_name"], ticket["flight_num"], cursor)
         db.commit()
     except Exception:
         db.rollback()
         raise
 
     log_action("customer", customer_email, "refund_request", "ticket", str(ticket_id), str(refund_amount))
+    if auto_assigned:
+        log_action(
+            "system",
+            "waitlist_auto_assign",
+            "waitlist_convert",
+            "ticket",
+            str(auto_assigned["ticket_id"]),
+            f"{ticket['airline_name']}:{ticket['flight_num']}:{auto_assigned['customer_email']}",
+        )
     return refund_id, refund_amount

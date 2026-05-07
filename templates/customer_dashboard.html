@@ -5,10 +5,10 @@
     <h2>Customer Dashboard</h2>
     <form method="post">
         <label>Origin
-            <input name="origin" placeholder="NYC or JFK" required>
+            <input name="origin" placeholder="NYC or JFK">
         </label>
         <label>Destination
-            <input name="destination" placeholder="Shanghai or PVG" required>
+            <input name="destination" placeholder="Shanghai or PVG">
         </label>
         <label>Date
             <input type="date" name="departure_date">
@@ -174,7 +174,7 @@
     <table>
         <thead>
             <tr>
-                <th>Airline</th><th>Flight</th><th>From</th><th>To</th><th>Departure</th><th>Waitlist Status</th>
+                <th>Airline</th><th>Flight</th><th>From</th><th>To</th><th>Departure</th><th>Position</th><th>Waitlist Status</th>
             </tr>
         </thead>
         <tbody>
@@ -185,6 +185,7 @@
                 <td>{{ item.departure_airport }}</td>
                 <td>{{ item.arrival_airport }}</td>
                 <td>{{ item.departure_time }}</td>
+                <td>{{ item.waitlist_position or "-" }}</td>
                 <td>{{ item.status|title }}</td>
             </tr>
             {% endfor %}

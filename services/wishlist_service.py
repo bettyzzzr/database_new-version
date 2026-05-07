@@ -2,11 +2,13 @@ from pymysql.err import IntegrityError
 
 from db import execute, execute_affected, fetch_all
 from services.audit_service import log_action
+from services.customer_schema_service import ensure_customer_feature_schema
 from services.flight_service import get_flight_by_id
 
 
 def add_wishlist_item(customer_email, airline_name, flight_num):
     """Add an upcoming flight to the customer's wishlist."""
+    ensure_customer_feature_schema()
     flight = get_flight_by_id(airline_name, flight_num)
     if not flight:
         raise ValueError("Flight was not found.")
@@ -30,6 +32,7 @@ def add_wishlist_item(customer_email, airline_name, flight_num):
 
 def remove_wishlist_item(customer_email, wishlist_id):
     """Remove a wishlist item owned by the customer."""
+    ensure_customer_feature_schema()
     affected = execute_affected(
         """
         DELETE FROM wishlist
@@ -44,6 +47,7 @@ def remove_wishlist_item(customer_email, wishlist_id):
 
 def get_wishlist_items(customer_email):
     """List the customer's wishlist with current flight status."""
+    ensure_customer_feature_schema()
     return fetch_all(
         """
         SELECT w.*, f.departure_airport, f.departure_time, f.arrival_airport,

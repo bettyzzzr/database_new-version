@@ -5,10 +5,10 @@
     <h2>Search Upcoming Flights</h2>
     <form method="post">
         <label>Origin
-            <input name="origin" placeholder="NYC, JFK, New York" value="{{ request.form.get('origin', '') }}" required>
+            <input name="origin" placeholder="NYC, JFK, New York" value="{{ request.form.get('origin', '') }}">
         </label>
         <label>Destination
-            <input name="destination" placeholder="Shanghai, SH, PVG" value="{{ request.form.get('destination', '') }}" required>
+            <input name="destination" placeholder="Shanghai, SH, PVG" value="{{ request.form.get('destination', '') }}">
         </label>
         <label>Date
             <input type="date" name="departure_date" value="{{ request.form.get('departure_date', '') }}">
