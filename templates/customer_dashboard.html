@@ -230,7 +230,7 @@
     <table>
         <thead>
             <tr>
-                <th>Airline</th><th>Flight</th><th>From</th><th>To</th><th>Departure</th><th>Position</th><th>Waitlist Status</th>
+                <th>Airline</th><th>Flight</th><th>From</th><th>To</th><th>Departure</th><th>Position</th><th>Waitlist Status</th><th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -243,6 +243,14 @@
                 <td>{{ item.departure_time }}</td>
                 <td>{{ item.waitlist_position or "-" }}</td>
                 <td>{{ item.status|title }}</td>
+                <td>
+                    {% if item.status == "notified" %}
+                    <form method="post" action="{{ url_for('customer.waitlist_claim') }}">
+                        <input type="hidden" name="waitlist_id" value="{{ item.waitlist_id }}">
+                        <button type="submit">Claim Seat</button>
+                    </form>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>

@@ -2,7 +2,7 @@ import os
 
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-change-me")
+    SECRET_KEY = os.environ.get("SECRET_KEY", "test")
     MYSQL_HOST = os.environ.get("MYSQL_HOST", "localhost")
     MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3306"))
     MYSQL_USER = os.environ.get("MYSQL_USER", "root")

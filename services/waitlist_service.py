@@ -4,7 +4,7 @@ from db import execute, fetch_all, fetch_one, get_db
 from services.audit_service import log_action
 from services.customer_schema_service import ensure_customer_feature_schema
 from services.flight_service import get_flight_by_id
-from services.ticket_service import get_seats_left
+from services.ticket_service import get_seats_left, insert_direct_ticket, validate_customer_purchase
 
 
 def join_waitlist(customer_email, airline_name, flight_num):
@@ -102,6 +102,35 @@ def notify_first_waiting_customer(airline_name, flight_num, cursor=None):
             f"{airline_name}:{flight_num}:{notified['customer_email']}",
         )
     return notified
+
+
+def claim_waitlist_ticket(customer_email, waitlist_id):
+    """Convert a notified waitlist row into a ticket."""
+    ensure_customer_feature_schema()
+    waitlist_item = fetch_one(
+        """
+        SELECT waitlist_id, airline_name, flight_num
+        FROM waitlist
+        WHERE waitlist_id = %s AND customer_email = %s AND status = 'notified'
+        """,
+        (waitlist_id, customer_email),
+    )
+    if not waitlist_item:
+        raise ValueError("No claimable waitlist seat was found.")
+
+    flight = validate_customer_purchase(customer_email, waitlist_item["airline_name"], waitlist_item["flight_num"])
+    db = get_db()
+    try:
+        with db.cursor() as cursor:
+            ticket_id = insert_direct_ticket(cursor, customer_email, flight)
+            cursor.execute("UPDATE waitlist SET status = 'converted' WHERE waitlist_id = %s", (waitlist_id,))
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    log_action("customer", customer_email, "waitlist_claim", "ticket", str(ticket_id), str(waitlist_id))
+    return ticket_id
 
 
 def get_customer_waitlist(customer_email):

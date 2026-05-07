@@ -15,7 +15,7 @@ from services.frequent_search_service import get_recent_searches, record_search
 from services.itinerary_service import confirm_itinerary_booking
 from services.refund_service import cancel_ticket_for_refund
 from services.ticket_service import get_customer_tickets, purchase_ticket
-from services.waitlist_service import get_customer_waitlist, join_waitlist
+from services.waitlist_service import claim_waitlist_ticket, get_customer_waitlist, join_waitlist
 from services.wishlist_service import add_wishlist_item, get_wishlist_items, remove_wishlist_item
 
 customer_bp = Blueprint("customer", __name__, url_prefix="/customer")
@@ -179,6 +179,17 @@ def waitlist_join():
     except ValueError as exc:
         flash(str(exc), "error")
     return redirect(request.referrer or url_for("customer.dashboard"))
+
+
+@customer_bp.route("/waitlist/claim", methods=["POST"])
+@customer_required
+def waitlist_claim():
+    try:
+        ticket_id = claim_waitlist_ticket(session["user_id"], request.form.get("waitlist_id", ""))
+        flash(f"Waitlist seat claimed. Ticket id: {ticket_id}.", "success")
+    except ValueError as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("customer.dashboard"))
 
 
 @customer_bp.route("/wishlist/add", methods=["POST"])
