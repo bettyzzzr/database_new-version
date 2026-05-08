@@ -5,7 +5,6 @@ from db import get_db
 
 @lru_cache(maxsize=1)
 def ensure_customer_feature_schema():
-    """Create missing Round 2 customer tables/columns for older databases."""
     statements = [
         """
         CREATE TABLE IF NOT EXISTS booking_order (

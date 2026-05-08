@@ -1,19 +1,13 @@
 # Contributions
 
-## Member 1
+## Betty Zou
 
-- Database schema design:
-- Flask route implementation:
-- Service-layer business rules:
-- Templates and demo:
+- Database schema design & Database seed data
+- Service-layer business rules
+- Customer features
 
-## Member 2
+## Adelyn Li
 
-- Database seed data:
-- Authentication/session flow:
-- Staff/admin/operator features:
-- Documentation and presentation:
-
-## Notes
-
-Update this file with each member's actual work before final submission.
+- Flask route implementation
+- Authentication/session flow
+- Staff/admin/operator features
